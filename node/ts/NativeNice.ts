@@ -27,10 +27,14 @@ import type {
   ReturnFfiCopyBackupMediaOut,
   ReturnFfiDeleteBackupMediaNextChunk,
   ReturnFfiDeleteBackupMediaOut,
+  ReturnFfiGetCdnCredentialsOut,
   ReturnFfiGetDevicesOut,
   ReturnFfiGetMediaBackupInfoOut,
   ReturnFfiGetMessageBackupInfoOut,
+  ReturnFfiGetSvrBCredentialsOut,
   ReturnFfiLinkedDeviceInternal,
+  ReturnFfiLookUpUsernameLinkArgs,
+  ReturnFfiLookUpUsernameLinkOut,
   ReturnFfiMyRemoteDeriveEnum,
   ReturnFfiMyRemoteDeriveStruct,
   ReturnFfiMySimpleTestEnum,
@@ -45,6 +49,7 @@ import type {
   ReturnFfiSetDeviceNameOut,
   ReturnFfiSetUsernameLinkArgs,
   ReturnFfiSetUsernameLinkOut,
+  ReturnFfiSimpleBackupTestOut,
   ReturnFfiTestStreamChunk,
   /* eslint-enable @typescript-eslint/no-unused-vars */
 } from './Native.js';
@@ -131,6 +136,13 @@ export type DeleteBackupMediaOut =
   | 'credentialRejected'
   | 'credentialRejectedWithoutAppropriateServerInfo';
 
+export type GetCdnCredentialsOut =
+  | {
+      success: CdnCredentials;
+    }
+  | 'credentialRejected'
+  | 'missingResponse';
+
 export type GetDevicesOut = {
   devices: Array<LinkedDeviceInternal>;
 };
@@ -149,6 +161,16 @@ export type GetMessageBackupInfoOut =
   | 'credentialRejected'
   | 'missingResponse';
 
+export type GetSvrBCredentialsOut =
+  | {
+      success: {
+        username: string;
+        password: string;
+      };
+    }
+  | 'credentialRejected'
+  | 'missingResponse';
+
 export type LinkedDeviceInternal = {
   id: DeviceId;
   encryptedName: Uint8Array<ArrayBuffer>;
@@ -156,6 +178,19 @@ export type LinkedDeviceInternal = {
   registrationId: number;
   createdAtCiphertext: Uint8Array<ArrayBuffer>;
 };
+
+export type LookUpUsernameLinkArgs = {
+  uuid: uuid.Uuid;
+  entropy: Uint8Array<ArrayBuffer>;
+};
+
+export type LookUpUsernameLinkOut =
+  | {
+      success: string;
+    }
+  | 'notFound'
+  | 'linkDataTooShort'
+  | 'missingResponse';
 
 export type MyRemoteDeriveEnum =
   | 'unit'
@@ -236,6 +271,11 @@ export type SetUsernameLinkOut =
       success: uuid.Uuid;
     }
   | 'usernameNotSet';
+
+export type SimpleBackupTestOut =
+  | 'success'
+  | 'credentialRejected'
+  | 'missingResponse';
 
 export type TestStreamChunk = {
   chunk: Array<string>;
@@ -377,6 +417,25 @@ export function returnConverterDeleteBackupMediaOut(
   }
 }
 
+export function returnConverterGetCdnCredentialsOut(
+  ffiInput: Native.ReturnFfiGetCdnCredentialsOut
+): GetCdnCredentialsOut {
+  switch (ffiInput.__type) {
+    case 0:
+      return {
+        success: cdnCredentialReturnConverter(ffiInput._0),
+      };
+    case 1:
+      return 'credentialRejected';
+    case 2:
+      return 'missingResponse';
+
+    default:
+      ffiInput satisfies never;
+      throw new Error('Unknown FFI return enum type for GetCdnCredentialsOut');
+  }
+}
+
 export function returnConverterGetDevicesOut(
   ffiInput: Native.ReturnFfiGetDevicesOut
 ): GetDevicesOut {
@@ -426,6 +485,28 @@ export function returnConverterGetMessageBackupInfoOut(
   }
 }
 
+export function returnConverterGetSvrBCredentialsOut(
+  ffiInput: Native.ReturnFfiGetSvrBCredentialsOut
+): GetSvrBCredentialsOut {
+  switch (ffiInput.__type) {
+    case 0:
+      return {
+        success: {
+          username: identity(ffiInput.username),
+          password: identity(ffiInput.password),
+        },
+      };
+    case 1:
+      return 'credentialRejected';
+    case 2:
+      return 'missingResponse';
+
+    default:
+      ffiInput satisfies never;
+      throw new Error('Unknown FFI return enum type for GetSvrBCredentialsOut');
+  }
+}
+
 export function returnConverterLinkedDeviceInternal(
   ffiInput: Native.ReturnFfiLinkedDeviceInternal
 ): LinkedDeviceInternal {
@@ -436,6 +517,36 @@ export function returnConverterLinkedDeviceInternal(
     registrationId: identity(ffiInput.registration_id),
     createdAtCiphertext: identity(ffiInput.created_at_ciphertext),
   };
+}
+
+export function returnConverterLookUpUsernameLinkArgs(
+  ffiInput: Native.ReturnFfiLookUpUsernameLinkArgs
+): LookUpUsernameLinkArgs {
+  return {
+    uuid: uuid.stringify(ffiInput.uuid),
+    entropy: identity(ffiInput.entropy),
+  };
+}
+
+export function returnConverterLookUpUsernameLinkOut(
+  ffiInput: Native.ReturnFfiLookUpUsernameLinkOut
+): LookUpUsernameLinkOut {
+  switch (ffiInput.__type) {
+    case 0:
+      return {
+        success: identity(ffiInput._0),
+      };
+    case 1:
+      return 'notFound';
+    case 2:
+      return 'linkDataTooShort';
+    case 3:
+      return 'missingResponse';
+
+    default:
+      ffiInput satisfies never;
+      throw new Error('Unknown FFI return enum type for LookUpUsernameLinkOut');
+  }
 }
 
 export function returnConverterMyRemoteDeriveEnum(
@@ -630,6 +741,23 @@ export function returnConverterSetUsernameLinkOut(
     default:
       ffiInput satisfies never;
       throw new Error('Unknown FFI return enum type for SetUsernameLinkOut');
+  }
+}
+
+export function returnConverterSimpleBackupTestOut(
+  ffiInput: Native.ReturnFfiSimpleBackupTestOut
+): SimpleBackupTestOut {
+  switch (ffiInput.__type) {
+    case 0:
+      return 'success';
+    case 1:
+      return 'credentialRejected';
+    case 2:
+      return 'missingResponse';
+
+    default:
+      ffiInput satisfies never;
+      throw new Error('Unknown FFI return enum type for SimpleBackupTestOut');
   }
 }
 
@@ -1112,6 +1240,33 @@ export function SvrKey_DeriveStorageServiceKey({
   return identity(Native.SvrKey_DeriveStorageServiceKey(identity(svr_key)));
 }
 
+export function TESTING_BackupDeleteAllTests(): Array<
+  GrpcTestCase<void, SimpleBackupTestOut>
+> {
+  return grpcTestCaseConverter(
+    identity,
+    returnConverterSimpleBackupTestOut
+  )(Native.TESTING_BackupDeleteAllTests());
+}
+
+export function TESTING_BackupRefreshTests(): Array<
+  GrpcTestCase<void, SimpleBackupTestOut>
+> {
+  return grpcTestCaseConverter(
+    identity,
+    returnConverterSimpleBackupTestOut
+  )(Native.TESTING_BackupRefreshTests());
+}
+
+export function TESTING_BackupSetPublicKeyTests(): Array<
+  GrpcTestCase<void, SimpleBackupTestOut>
+> {
+  return grpcTestCaseConverter(
+    identity,
+    returnConverterSimpleBackupTestOut
+  )(Native.TESTING_BackupSetPublicKeyTests());
+}
+
 export function TESTING_ClearPushTokenTests(): Array<GrpcTestCase<void, void>> {
   return grpcTestCaseConverter(
     identity,
@@ -1168,6 +1323,24 @@ export function TESTING_DeleteUsernameLinkTests(): Array<
   )(Native.TESTING_DeleteUsernameLinkTests());
 }
 
+export function TESTING_GetBackupCdnCredentialsTests(): Array<
+  GrpcTestCase<number, GetCdnCredentialsOut>
+> {
+  return grpcTestCaseConverter(
+    identity,
+    returnConverterGetCdnCredentialsOut
+  )(Native.TESTING_GetBackupCdnCredentialsTests());
+}
+
+export function TESTING_GetBackupSvrBCredentialsTests(): Array<
+  GrpcTestCase<void, GetSvrBCredentialsOut>
+> {
+  return grpcTestCaseConverter(
+    identity,
+    returnConverterGetSvrBCredentialsOut
+  )(Native.TESTING_GetBackupSvrBCredentialsTests());
+}
+
 export function TESTING_GetDevicesTests(): Array<
   GrpcTestCase<void, GetDevicesOut>
 > {
@@ -1193,6 +1366,15 @@ export function TESTING_GetMessageBackupInfoTests(): Array<
     identity,
     returnConverterGetMessageBackupInfoOut
   )(Native.TESTING_GetMessageBackupInfoTests());
+}
+
+export function TESTING_LookUpUsernameLinkTests(): Array<
+  GrpcTestCase<LookUpUsernameLinkArgs, LookUpUsernameLinkOut>
+> {
+  return grpcTestCaseConverter(
+    returnConverterLookUpUsernameLinkArgs,
+    returnConverterLookUpUsernameLinkOut
+  )(Native.TESTING_LookUpUsernameLinkTests());
 }
 
 export function TESTING_MyRemoteDeriveEnum_identity({

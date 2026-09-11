@@ -409,16 +409,6 @@ fn TESTING_FakeChatRemoteEnd_GrpcFrameForMessageLength(len: u32) -> Vec<u8> {
     result
 }
 
-#[bridge_fn]
-fn TESTING_FakeChatRemoteEnd_BinprotoToJson(name: String, input: &[u8]) -> String {
-    libsignal_net_grpc::json::expect_binproto_to_json_by_name(&name, input)
-}
-
-#[bridge_fn]
-fn TESTING_FakeChatRemoteEnd_JsonToBinproto(name: String, input: String) -> Vec<u8> {
-    libsignal_net_grpc::json::expect_json_to_binproto_by_name(&name, &input)
-}
-
 make_error_testing_enum! {
     enum TestingChatConnectError for ConnectError {
         WebSocket => WebSocketConnectionFailed,
@@ -604,6 +594,47 @@ mod remote_derives {
         CredentialRejected,
         MissingResponse,
     }
+
+    #[derive(BridgedAsValue, StructuralFrom)]
+    #[structural_from(libsignal_net_chat::grpc::usernames::test_cases::LookUpUsernameLinkArgs)]
+    pub(super) struct LookUpUsernameLinkArgs {
+        uuid: Uuid,
+        entropy: [u8; usernames::constants::USERNAME_LINK_ENTROPY_SIZE],
+    }
+
+    #[derive(BridgedAsValue, StructuralFrom)]
+    #[structural_from(libsignal_net_chat::grpc::usernames::test_cases::LookUpUsernameLinkOut)]
+    pub(super) enum LookUpUsernameLinkOut {
+        Success(String),
+        NotFound,
+        LinkDataTooShort,
+        MissingResponse,
+    }
+
+    #[derive(BridgedAsValue, StructuralFrom)]
+    #[structural_from(libsignal_net_chat::grpc::backups::test_cases::SimpleBackupTestOut)]
+    pub(super) enum SimpleBackupTestOut {
+        Success,
+        CredentialRejected,
+        MissingResponse,
+    }
+
+    #[derive(BridgedAsValue, StructuralFrom)]
+    #[structural_from(libsignal_net_chat::grpc::backups::test_cases::GetCdnCredentialsOut)]
+    #[bridge(arg = false)]
+    pub enum GetCdnCredentialsOut {
+        Success(libsignal_net_chat::api::backups::CdnCredentials),
+        CredentialRejected,
+        MissingResponse,
+    }
+
+    #[derive(BridgedAsValue, StructuralFrom)]
+    #[structural_from(libsignal_net_chat::grpc::backups::test_cases::GetSvrBCredentialsOut)]
+    pub enum GetSvrBCredentialsOut {
+        Success { username: String, password: String },
+        CredentialRejected,
+        MissingResponse,
+    }
 }
 
 #[bridge_fn(nice = true)]
@@ -714,4 +745,35 @@ fn TESTING_DeleteBackupMediaTests() -> GrpcTestCases<
 fn TESTING_forceEmitVecOfBridgeDeleteBackupMediaOut()
 -> BridgeVec<remote_derives::DeleteBackupMediaOut> {
     unreachable!()
+}
+
+#[bridge_fn(nice = true)]
+fn TESTING_LookUpUsernameLinkTests()
+-> GrpcTestCases<remote_derives::LookUpUsernameLinkArgs, remote_derives::LookUpUsernameLinkOut> {
+    libsignal_net_chat::grpc::usernames::test_cases::look_up_username_link_test_cases().into()
+}
+
+#[bridge_fn(nice = true)]
+fn TESTING_BackupSetPublicKeyTests() -> GrpcTestCases<(), remote_derives::SimpleBackupTestOut> {
+    libsignal_net_chat::grpc::backups::test_cases::set_public_key_test_cases().into()
+}
+#[bridge_fn(nice = true)]
+fn TESTING_BackupRefreshTests() -> GrpcTestCases<(), remote_derives::SimpleBackupTestOut> {
+    libsignal_net_chat::grpc::backups::test_cases::refresh_test_cases().into()
+}
+#[bridge_fn(nice = true)]
+fn TESTING_BackupDeleteAllTests() -> GrpcTestCases<(), remote_derives::SimpleBackupTestOut> {
+    libsignal_net_chat::grpc::backups::test_cases::delete_all_test_cases().into()
+}
+
+#[bridge_fn(nice = true)]
+fn TESTING_GetBackupCdnCredentialsTests() -> GrpcTestCases<i32, remote_derives::GetCdnCredentialsOut>
+{
+    libsignal_net_chat::grpc::backups::test_cases::get_cdn_credentials_test_cases().into()
+}
+
+#[bridge_fn(nice = true)]
+fn TESTING_GetBackupSvrBCredentialsTests()
+-> GrpcTestCases<(), remote_derives::GetSvrBCredentialsOut> {
+    libsignal_net_chat::grpc::backups::test_cases::get_svrb_credentials_test_cases().into()
 }

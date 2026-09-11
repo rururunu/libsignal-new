@@ -836,6 +836,8 @@ redact_no_arg_backup_request!(DeleteAllRequest);
 
 // Not cfg(test) so it can be accessed via bridging tests.
 pub mod test_cases {
+    use std::collections::HashMap;
+
     use libsignal_net::chat::fake::BodyWithTrailers;
     use libsignal_net_grpc::proto::chat::backup::CopyMediaItem;
 
@@ -1329,11 +1331,277 @@ pub mod test_cases {
         };
         status_for_server_side_error(tonic::Code::Aborted, "STREAM_CLOSED", backup_info)
     }
+
+    pub enum SimpleBackupTestOut {
+        Success,
+        CredentialRejected,
+        MissingResponse,
+    }
+
+    pub fn set_public_key_test_cases()
+    -> Vec<GrpcTestCase<(), SetPublicKeyRequest, SetPublicKeyResponse, SimpleBackupTestOut>> {
+        let method = "/org.signal.chat.backup.BackupsAnonymous/SetPublicKey";
+        let request_grpc = SetPublicKeyRequest {
+            signed_presentation: Some(test_signed_presentation()),
+            public_key: BackupAuth::TEST_SIGNING_KEY_PUB.to_vec(),
+        };
+        vec![
+            GrpcTestCase {
+                name: "success".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: SetPublicKeyResponse {
+                    response: Some(set_public_key_response::Response::Success(())),
+                },
+                response: SimpleBackupTestOut::Success,
+            },
+            GrpcTestCase {
+                name: "credential rejected".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: SetPublicKeyResponse {
+                    response: Some(set_public_key_response::Response::FailedAuthentication(
+                        FailedZkAuthentication {
+                            description: "bad!".to_owned(),
+                        },
+                    )),
+                },
+                response: SimpleBackupTestOut::CredentialRejected,
+            },
+            GrpcTestCase {
+                name: "missing response".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc,
+                response_grpc: SetPublicKeyResponse { response: None },
+                response: SimpleBackupTestOut::MissingResponse,
+            },
+        ]
+    }
+
+    pub fn refresh_test_cases()
+    -> Vec<GrpcTestCase<(), RefreshRequest, RefreshResponse, SimpleBackupTestOut>> {
+        let method = "/org.signal.chat.backup.BackupsAnonymous/Refresh";
+        let request_grpc = RefreshRequest {
+            signed_presentation: Some(test_signed_presentation()),
+        };
+        vec![
+            GrpcTestCase {
+                name: "success".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: RefreshResponse {
+                    response: Some(refresh_response::Response::Success(())),
+                },
+                response: SimpleBackupTestOut::Success,
+            },
+            GrpcTestCase {
+                name: "credential rejected".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: RefreshResponse {
+                    response: Some(refresh_response::Response::FailedAuthentication(
+                        FailedZkAuthentication {
+                            description: "bad!".to_owned(),
+                        },
+                    )),
+                },
+                response: SimpleBackupTestOut::CredentialRejected,
+            },
+            GrpcTestCase {
+                name: "missing response".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc,
+                response_grpc: RefreshResponse { response: None },
+                response: SimpleBackupTestOut::MissingResponse,
+            },
+        ]
+    }
+
+    pub fn delete_all_test_cases()
+    -> Vec<GrpcTestCase<(), DeleteAllRequest, DeleteAllResponse, SimpleBackupTestOut>> {
+        let method = "/org.signal.chat.backup.BackupsAnonymous/DeleteAll";
+        let request_grpc = DeleteAllRequest {
+            signed_presentation: Some(test_signed_presentation()),
+        };
+        vec![
+            GrpcTestCase {
+                name: "success".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: DeleteAllResponse {
+                    response: Some(delete_all_response::Response::Success(())),
+                },
+                response: SimpleBackupTestOut::Success,
+            },
+            GrpcTestCase {
+                name: "credential rejected".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: DeleteAllResponse {
+                    response: Some(delete_all_response::Response::FailedAuthentication(
+                        FailedZkAuthentication {
+                            description: "bad!".to_owned(),
+                        },
+                    )),
+                },
+                response: SimpleBackupTestOut::CredentialRejected,
+            },
+            GrpcTestCase {
+                name: "missing response".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc,
+                response_grpc: DeleteAllResponse { response: None },
+                response: SimpleBackupTestOut::MissingResponse,
+            },
+        ]
+    }
+
+    pub enum GetCdnCredentialsOut {
+        Success(CdnCredentials),
+        CredentialRejected,
+        MissingResponse,
+    }
+
+    pub fn get_cdn_credentials_test_cases() -> Vec<
+        GrpcTestCase<
+            i32,
+            GetCdnCredentialsRequest,
+            GetCdnCredentialsResponse,
+            GetCdnCredentialsOut,
+        >,
+    > {
+        let method = "/org.signal.chat.backup.BackupsAnonymous/GetCdnCredentials";
+        let request_grpc = GetCdnCredentialsRequest {
+            signed_presentation: Some(test_signed_presentation()),
+            cdn: 15,
+        };
+        vec![
+            GrpcTestCase {
+                name: "success".to_owned(),
+                method: method.to_owned(),
+                request: 15,
+                request_grpc: request_grpc.clone(),
+                response_grpc: GetCdnCredentialsResponse {
+                    response: Some(get_cdn_credentials_response::Response::CdnCredentials(
+                        get_cdn_credentials_response::CdnCredentials {
+                            headers: HashMap::from_iter([
+                                ("one".to_string(), "val1".to_string()),
+                                ("two".to_string(), "val2".to_string()),
+                            ]),
+                        },
+                    )),
+                },
+                response: GetCdnCredentialsOut::Success(CdnCredentials {
+                    headers: vec![
+                        ("one".to_owned(), "val1".to_owned()),
+                        ("two".to_owned(), "val2".to_owned()),
+                    ],
+                }),
+            },
+            GrpcTestCase {
+                name: "credential rejected".to_owned(),
+                method: method.to_owned(),
+                request: 15,
+                request_grpc: request_grpc.clone(),
+                response_grpc: GetCdnCredentialsResponse {
+                    response: Some(
+                        get_cdn_credentials_response::Response::FailedAuthentication(
+                            FailedZkAuthentication {
+                                description: "bad!".to_owned(),
+                            },
+                        ),
+                    ),
+                },
+                response: GetCdnCredentialsOut::CredentialRejected,
+            },
+            GrpcTestCase {
+                name: "missing response".to_owned(),
+                method: method.to_owned(),
+                request: 15,
+                request_grpc,
+                response_grpc: GetCdnCredentialsResponse { response: None },
+                response: GetCdnCredentialsOut::MissingResponse,
+            },
+        ]
+    }
+
+    pub enum GetSvrBCredentialsOut {
+        Success { username: String, password: String },
+        CredentialRejected,
+        MissingResponse,
+    }
+
+    pub fn get_svrb_credentials_test_cases() -> Vec<
+        GrpcTestCase<
+            (),
+            GetSvrBCredentialsRequest,
+            GetSvrBCredentialsResponse,
+            GetSvrBCredentialsOut,
+        >,
+    > {
+        let method = "/org.signal.chat.backup.BackupsAnonymous/GetSvrBCredentials";
+        let request_grpc = GetSvrBCredentialsRequest {
+            signed_presentation: Some(test_signed_presentation()),
+        };
+        vec![
+            GrpcTestCase {
+                name: "success".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: GetSvrBCredentialsResponse {
+                    response: Some(get_svr_b_credentials_response::Response::SvrbCredentials(
+                        get_svr_b_credentials_response::SvrBCredentials {
+                            username: "user".to_owned(),
+                            password: "pass".to_owned(),
+                        },
+                    )),
+                },
+                response: GetSvrBCredentialsOut::Success {
+                    username: "user".to_owned(),
+                    password: "pass".to_owned(),
+                },
+            },
+            GrpcTestCase {
+                name: "credential rejected".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc: request_grpc.clone(),
+                response_grpc: GetSvrBCredentialsResponse {
+                    response: Some(
+                        get_svr_b_credentials_response::Response::FailedAuthentication(
+                            FailedZkAuthentication {
+                                description: "bad!".to_owned(),
+                            },
+                        ),
+                    ),
+                },
+                response: GetSvrBCredentialsOut::CredentialRejected,
+            },
+            GrpcTestCase {
+                name: "missing response".to_owned(),
+                method: method.to_owned(),
+                request: (),
+                request_grpc,
+                response_grpc: GetSvrBCredentialsResponse { response: None },
+                response: GetSvrBCredentialsOut::MissingResponse,
+            },
+        ]
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
     use std::fmt::Debug;
     use std::sync::Arc;
     use std::sync::atomic::AtomicU32;
@@ -1505,215 +1773,162 @@ mod test {
             .expect("sync")
     }
 
-    #[test_case(ok(SetPublicKeyResponse {
-        response: Some(set_public_key_response::Response::Success(Default::default()))
-    }) => matches Ok(()))]
-    #[test_case(ok(SetPublicKeyResponse {
-        response: Some(set_public_key_response::Response::FailedAuthentication(FailedZkAuthentication {
-            description: "bad!".to_owned()
-        }))
-    }) => matches Err(RequestError::Other(BackupAuthCredentialRejected)))]
-    #[test_case(ok(SetPublicKeyResponse {
-        response: None,
-    }) => matches Err(RequestError::Unexpected { .. }))]
-    fn test_set_public_key(
-        response: http::Response<BodyWithTrailers>,
-    ) -> Result<(), RequestError<BackupAuthCredentialRejected>> {
-        let validator = RequestValidator {
-            expected: req(
-                "/org.signal.chat.backup.BackupsAnonymous/SetPublicKey",
-                SetPublicKeyRequest {
-                    signed_presentation: Some(SignedPresentation {
-                        presentation: BackupAuth::EXPECTED_TEST_PRESENTATION.to_vec(),
-                        presentation_signature: BackupAuth::EXPECTED_TEST_SIGNATURE.to_vec(),
-                    }),
-                    public_key: BackupAuth::TEST_SIGNING_KEY_PUB.to_vec(),
-                },
-            ),
-            response,
-        };
-
-        Unauth(&validator)
-            .set_backup_public_key(
-                &BackupAuth::generate_for_testing(
-                    zkgroup::backups::BackupCredentialType::Media,
+    #[test]
+    fn test_set_public_key() {
+        use super::test_cases::*;
+        run_tests(
+            set_public_key_test_cases(),
+            |chat: Unauth<_>, ()| async move {
+                chat.set_backup_public_key(
+                    &BackupAuth::generate_for_testing(
+                        zkgroup::backups::BackupCredentialType::Media,
+                        &mut fixed_seed_test_rng(),
+                    ),
                     &mut fixed_seed_test_rng(),
+                )
+                .await
+            },
+            |expected, actual| match expected {
+                SimpleBackupTestOut::Success => assert_matches!(actual, Ok(())),
+                SimpleBackupTestOut::CredentialRejected => assert_matches!(
+                    actual,
+                    Err(RequestError::Other(BackupAuthCredentialRejected))
                 ),
-                &mut fixed_seed_test_rng(),
-            )
-            .now_or_never()
-            .expect("sync")
+                SimpleBackupTestOut::MissingResponse => {
+                    assert_matches!(actual, Err(RequestError::Unexpected { .. }))
+                }
+            },
+        );
     }
 
-    #[test_case(ok(GetCdnCredentialsResponse {
-        response: Some(get_cdn_credentials_response::Response::CdnCredentials(get_cdn_credentials_response::CdnCredentials {
-            headers: HashMap::from_iter([
-                ("one".to_string(), "val1".to_string()),
-                ("two".to_string(), "val2".to_string()),
-            ]),
-        }))
-    }) => matches Ok(CdnCredentials { headers }) if <HashMap<String, String>>::from_iter(headers.clone()) == HashMap::from_iter([
-        ("one".to_string(), "val1".to_string()),
-        ("two".to_string(), "val2".to_string()),
-    ]))]
-    #[test_case(ok(GetCdnCredentialsResponse {
-        response: Some(get_cdn_credentials_response::Response::FailedAuthentication(FailedZkAuthentication {
-            description: "bad!".to_owned()
-        }))
-    }) => matches Err(RequestError::Other(BackupAuthCredentialRejected)))]
-    #[test_case(ok(GetCdnCredentialsResponse {
-        response: None,
-    }) => matches Err(RequestError::Unexpected { .. }))]
-    fn test_get_cdn_credentials(
-        response: http::Response<BodyWithTrailers>,
-    ) -> Result<CdnCredentials, RequestError<BackupAuthCredentialRejected>> {
-        let validator = RequestValidator {
-            expected: req(
-                "/org.signal.chat.backup.BackupsAnonymous/GetCdnCredentials",
-                GetCdnCredentialsRequest {
-                    signed_presentation: Some(SignedPresentation {
-                        presentation: BackupAuth::EXPECTED_TEST_PRESENTATION.to_vec(),
-                        presentation_signature: BackupAuth::EXPECTED_TEST_SIGNATURE.to_vec(),
-                    }),
-                    cdn: 15,
-                },
-            ),
-            response,
-        };
-
-        Unauth(&validator)
-            .get_backup_cdn_credentials(
-                &BackupAuth::generate_for_testing(
-                    zkgroup::backups::BackupCredentialType::Media,
+    #[test]
+    fn test_get_cdn_credentials() {
+        use super::test_cases::*;
+        run_tests(
+            get_cdn_credentials_test_cases(),
+            |chat: Unauth<_>, cdn| async move {
+                chat.get_backup_cdn_credentials(
+                    &BackupAuth::generate_for_testing(
+                        zkgroup::backups::BackupCredentialType::Media,
+                        &mut fixed_seed_test_rng(),
+                    ),
+                    cdn.try_into().unwrap(),
                     &mut fixed_seed_test_rng(),
+                )
+                .await
+            },
+            |expected, actual| match expected {
+                GetCdnCredentialsOut::Success(CdnCredentials {
+                    headers: expected_headers,
+                }) => {
+                    let CdnCredentials {
+                        headers: actual_headers,
+                    } = actual.expect("success");
+                    assert_eq!(
+                        HashSet::<(String, String)>::from_iter(expected_headers),
+                        HashSet::from_iter(actual_headers)
+                    );
+                }
+                GetCdnCredentialsOut::CredentialRejected => assert_matches!(
+                    actual,
+                    Err(RequestError::Other(BackupAuthCredentialRejected))
                 ),
-                15,
-                &mut fixed_seed_test_rng(),
-            )
-            .now_or_never()
-            .expect("sync")
+                GetCdnCredentialsOut::MissingResponse => {
+                    assert_matches!(actual, Err(RequestError::Unexpected { .. }))
+                }
+            },
+        );
     }
 
-    #[test_case(ok(GetSvrBCredentialsResponse {
-        response: Some(get_svr_b_credentials_response::Response::SvrbCredentials(get_svr_b_credentials_response::SvrBCredentials {
-            username: "user".to_string(),
-            password: "pass".to_string(),
-        }))
-    }) => matches Ok((username, password)) if username == "user" && password == "pass")]
-    #[test_case(ok(GetSvrBCredentialsResponse {
-        response: Some(get_svr_b_credentials_response::Response::FailedAuthentication(FailedZkAuthentication {
-            description: "bad!".to_owned()
-        }))
-    }) => matches Err(RequestError::Other(BackupAuthCredentialRejected)))]
-    #[test_case(ok(GetSvrBCredentialsResponse {
-        response: None,
-    }) => matches Err(RequestError::Unexpected { .. }))]
-    fn test_get_svrb_credentials(
-        response: http::Response<BodyWithTrailers>,
-    ) -> Result<(String, String), RequestError<BackupAuthCredentialRejected>> {
-        let validator = RequestValidator {
-            expected: req(
-                "/org.signal.chat.backup.BackupsAnonymous/GetSvrBCredentials",
-                GetSvrBCredentialsRequest {
-                    signed_presentation: Some(SignedPresentation {
-                        presentation: BackupAuth::EXPECTED_TEST_PRESENTATION.to_vec(),
-                        presentation_signature: BackupAuth::EXPECTED_TEST_SIGNATURE.to_vec(),
-                    }),
-                },
-            ),
-            response,
-        };
-
-        Unauth(&validator)
-            .get_backup_svrb_credentials(
-                &BackupAuth::generate_for_testing(
-                    zkgroup::backups::BackupCredentialType::Media,
+    #[test]
+    fn test_get_svrb_credentials() {
+        use super::test_cases::*;
+        run_tests(
+            get_svrb_credentials_test_cases(),
+            |chat: Unauth<_>, ()| async move {
+                chat.get_backup_svrb_credentials(
+                    &BackupAuth::generate_for_testing(
+                        zkgroup::backups::BackupCredentialType::Media,
+                        &mut fixed_seed_test_rng(),
+                    ),
                     &mut fixed_seed_test_rng(),
-                ),
-                &mut fixed_seed_test_rng(),
-            )
-            .now_or_never()
-            .expect("sync")
-            // Map to something that supports Debug, for test_case failure output.
-            .map(|libsignal_net::auth::Auth { username, password }| (username, password))
+                )
+                .await
+            },
+            |expected, actual| match expected {
+                GetSvrBCredentialsOut::Success {
+                    username: expected_username,
+                    password: expected_password,
+                } => {
+                    let libsignal_net::auth::Auth { username, password } = actual.expect("success");
+                    assert_eq!(username, expected_username);
+                    assert_eq!(password, expected_password);
+                }
+                GetSvrBCredentialsOut::CredentialRejected => assert!(matches!(
+                    actual,
+                    Err(RequestError::Other(BackupAuthCredentialRejected))
+                )),
+                GetSvrBCredentialsOut::MissingResponse => {
+                    assert!(matches!(actual, Err(RequestError::Unexpected { .. })))
+                }
+            },
+        );
     }
 
-    #[test_case(ok(RefreshResponse {
-        response: Some(refresh_response::Response::Success(Default::default()))
-    }) => matches Ok(()))]
-    #[test_case(ok(RefreshResponse {
-        response: Some(refresh_response::Response::FailedAuthentication(FailedZkAuthentication {
-            description: "bad!".to_owned()
-        }))
-    }) => matches Err(RequestError::Other(BackupAuthCredentialRejected)))]
-    #[test_case(ok(RefreshResponse {
-        response: None,
-    }) => matches Err(RequestError::Unexpected { .. }))]
-    fn test_refresh(
-        response: http::Response<BodyWithTrailers>,
-    ) -> Result<(), RequestError<BackupAuthCredentialRejected>> {
-        let validator = RequestValidator {
-            expected: req(
-                "/org.signal.chat.backup.BackupsAnonymous/Refresh",
-                RefreshRequest {
-                    signed_presentation: Some(SignedPresentation {
-                        presentation: BackupAuth::EXPECTED_TEST_PRESENTATION.to_vec(),
-                        presentation_signature: BackupAuth::EXPECTED_TEST_SIGNATURE.to_vec(),
-                    }),
-                },
-            ),
-            response,
-        };
-
-        Unauth(&validator)
-            .refresh_backup(
-                &BackupAuth::generate_for_testing(
-                    zkgroup::backups::BackupCredentialType::Media,
+    #[test]
+    fn test_refresh() {
+        use super::test_cases::*;
+        run_tests(
+            refresh_test_cases(),
+            |chat: Unauth<_>, ()| async move {
+                chat.refresh_backup(
+                    &BackupAuth::generate_for_testing(
+                        zkgroup::backups::BackupCredentialType::Media,
+                        &mut fixed_seed_test_rng(),
+                    ),
                     &mut fixed_seed_test_rng(),
+                )
+                .await
+            },
+            |expected, actual| match expected {
+                SimpleBackupTestOut::Success => assert_matches!(actual, Ok(())),
+                SimpleBackupTestOut::CredentialRejected => assert_matches!(
+                    actual,
+                    Err(RequestError::Other(BackupAuthCredentialRejected))
                 ),
-                &mut fixed_seed_test_rng(),
-            )
-            .now_or_never()
-            .expect("sync")
+                SimpleBackupTestOut::MissingResponse => {
+                    assert_matches!(actual, Err(RequestError::Unexpected { .. }))
+                }
+            },
+        );
     }
 
-    #[test_case(ok(DeleteAllResponse {
-        response: Some(delete_all_response::Response::Success(Default::default()))
-    }) => matches Ok(()))]
-    #[test_case(ok(DeleteAllResponse {
-        response: Some(delete_all_response::Response::FailedAuthentication(FailedZkAuthentication {
-            description: "bad!".to_owned()
-        }))
-    }) => matches Err(RequestError::Other(BackupAuthCredentialRejected)))]
-    #[test_case(ok(DeleteAllResponse {
-        response: None,
-    }) => matches Err(RequestError::Unexpected { .. }))]
-    fn test_delete_all(
-        response: http::Response<BodyWithTrailers>,
-    ) -> Result<(), RequestError<BackupAuthCredentialRejected>> {
-        let validator = RequestValidator {
-            expected: req(
-                "/org.signal.chat.backup.BackupsAnonymous/DeleteAll",
-                RefreshRequest {
-                    signed_presentation: Some(SignedPresentation {
-                        presentation: BackupAuth::EXPECTED_TEST_PRESENTATION.to_vec(),
-                        presentation_signature: BackupAuth::EXPECTED_TEST_SIGNATURE.to_vec(),
-                    }),
-                },
-            ),
-            response,
-        };
-
-        Unauth(&validator)
-            .backup_delete_all(
-                &BackupAuth::generate_for_testing(
-                    zkgroup::backups::BackupCredentialType::Media,
+    #[test]
+    fn test_delete_all() {
+        use super::test_cases::*;
+        run_tests(
+            delete_all_test_cases(),
+            |chat: Unauth<_>, ()| async move {
+                chat.backup_delete_all(
+                    &BackupAuth::generate_for_testing(
+                        zkgroup::backups::BackupCredentialType::Media,
+                        &mut fixed_seed_test_rng(),
+                    ),
                     &mut fixed_seed_test_rng(),
+                )
+                .await
+            },
+            |expected, actual| match expected {
+                SimpleBackupTestOut::Success => assert_matches!(actual, Ok(())),
+                SimpleBackupTestOut::CredentialRejected => assert_matches!(
+                    actual,
+                    Err(RequestError::Other(BackupAuthCredentialRejected))
                 ),
-                &mut fixed_seed_test_rng(),
-            )
-            .now_or_never()
-            .expect("sync")
+                SimpleBackupTestOut::MissingResponse => {
+                    assert_matches!(actual, Err(RequestError::Unexpected { .. }))
+                }
+            },
+        );
     }
 
     #[test]

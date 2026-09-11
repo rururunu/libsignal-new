@@ -1,4 +1,3 @@
-v0.99.1
+v0.99.2
 
-- node: Support SVR2 enclave migration.
-- Swift, Node: Don't log an error about unexpected server timestamps on unauthenticated connections.
+- node: Expose Svr2BackupSession serialize()/deserialize()

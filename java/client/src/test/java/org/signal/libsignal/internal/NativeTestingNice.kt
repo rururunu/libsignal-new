@@ -103,6 +103,38 @@ public sealed class DeleteBackupMediaOut {
   }
 }
 
+public sealed class GetCdnCredentialsOut {
+  public data class Success(
+    val _0: org.signal.libsignal.net.BackupCdnCredentials,
+  ) : GetCdnCredentialsOut() {
+    public companion object {
+      @JvmStatic
+      @JvmName("fromNative")
+      @CalledFromNative
+      internal fun fromNative(_0: Any?): Success =
+        Success(
+          _0 =
+            org.signal.libsignal.net.BackupCdnCredentials
+              .fromFfiHeaders(_0 as Array<Object>),
+        )
+    }
+  }
+
+  public data object CredentialRejected : GetCdnCredentialsOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): CredentialRejected = CredentialRejected
+  }
+
+  public data object MissingResponse : GetCdnCredentialsOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): MissingResponse = MissingResponse
+  }
+}
+
 public data class GetDevicesOut(
   val devices: List<org.signal.libsignal.internal.LinkedDeviceInternal>,
 ) {
@@ -175,6 +207,102 @@ public sealed class GetMessageBackupInfoOut {
   }
 
   public data object MissingResponse : GetMessageBackupInfoOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): MissingResponse = MissingResponse
+  }
+}
+
+public sealed class GetSvrBCredentialsOut {
+  public data class Success(
+    val username: String,
+    val password: String,
+  ) : GetSvrBCredentialsOut() {
+    public companion object {
+      @JvmStatic
+      @JvmName("fromNative")
+      @CalledFromNative
+      internal fun fromNative(
+        username: Any?,
+        password: Any?,
+      ): Success =
+        Success(
+          username =
+            identity(username as String),
+          password =
+            identity(password as String),
+        )
+    }
+  }
+
+  public data object CredentialRejected : GetSvrBCredentialsOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): CredentialRejected = CredentialRejected
+  }
+
+  public data object MissingResponse : GetSvrBCredentialsOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): MissingResponse = MissingResponse
+  }
+}
+
+public data class LookUpUsernameLinkArgs(
+  val uuid: java.util.UUID,
+  val entropy: ByteArray,
+) {
+  public companion object {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(
+      uuid: Any?,
+      entropy: Any?,
+    ): LookUpUsernameLinkArgs =
+      LookUpUsernameLinkArgs(
+        uuid =
+          identity(uuid as java.util.UUID),
+        entropy =
+          identity(entropy as ByteArray),
+      )
+  }
+}
+
+public sealed class LookUpUsernameLinkOut {
+  public data class Success(
+    val _0: String,
+  ) : LookUpUsernameLinkOut() {
+    public companion object {
+      @JvmStatic
+      @JvmName("fromNative")
+      @CalledFromNative
+      internal fun fromNative(_0: Any?): Success =
+        Success(
+          _0 =
+            identity(_0 as String),
+        )
+    }
+  }
+
+  public data object NotFound : LookUpUsernameLinkOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): NotFound = NotFound
+  }
+
+  public data object LinkDataTooShort : LookUpUsernameLinkOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): LinkDataTooShort = LinkDataTooShort
+  }
+
+  public data object MissingResponse : LookUpUsernameLinkOut() {
     @JvmStatic
     @JvmName("fromNative")
     @CalledFromNative
@@ -643,6 +771,29 @@ public sealed class SetUsernameLinkOut {
   }
 }
 
+public sealed class SimpleBackupTestOut {
+  public data object Success : SimpleBackupTestOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): Success = Success
+  }
+
+  public data object CredentialRejected : SimpleBackupTestOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): CredentialRejected = CredentialRejected
+  }
+
+  public data object MissingResponse : SimpleBackupTestOut() {
+    @JvmStatic
+    @JvmName("fromNative")
+    @CalledFromNative
+    internal fun fromNative(): MissingResponse = MissingResponse
+  }
+}
+
 public data class TestStreamChunk(
   val chunk: List<String>,
   val termination: Any?,
@@ -665,6 +816,36 @@ public data class TestStreamChunk(
 }
 
 public object NativeTestingNice {
+  public fun TESTING_BackupDeleteAllTests(): List<org.signal.libsignal.net.GrpcTestCase<Void?, org.signal.libsignal.internal.SimpleBackupTestOut>> {
+    val ffiOut =
+      NativeTesting.TESTING_BackupDeleteAllTests()
+
+    return org.signal.libsignal.net.GrpcTestCase
+      .resultConverter<Void?, Object, Void?, org.signal.libsignal.internal.SimpleBackupTestOut>({
+        identity(it)
+      }, { downcastFromObject<org.signal.libsignal.internal.SimpleBackupTestOut>(it) })(ffiOut)
+  }
+
+  public fun TESTING_BackupRefreshTests(): List<org.signal.libsignal.net.GrpcTestCase<Void?, org.signal.libsignal.internal.SimpleBackupTestOut>> {
+    val ffiOut =
+      NativeTesting.TESTING_BackupRefreshTests()
+
+    return org.signal.libsignal.net.GrpcTestCase
+      .resultConverter<Void?, Object, Void?, org.signal.libsignal.internal.SimpleBackupTestOut>({
+        identity(it)
+      }, { downcastFromObject<org.signal.libsignal.internal.SimpleBackupTestOut>(it) })(ffiOut)
+  }
+
+  public fun TESTING_BackupSetPublicKeyTests(): List<org.signal.libsignal.net.GrpcTestCase<Void?, org.signal.libsignal.internal.SimpleBackupTestOut>> {
+    val ffiOut =
+      NativeTesting.TESTING_BackupSetPublicKeyTests()
+
+    return org.signal.libsignal.net.GrpcTestCase
+      .resultConverter<Void?, Object, Void?, org.signal.libsignal.internal.SimpleBackupTestOut>({
+        identity(it)
+      }, { downcastFromObject<org.signal.libsignal.internal.SimpleBackupTestOut>(it) })(ffiOut)
+  }
+
   public fun TESTING_ClearPushTokenTests(): List<org.signal.libsignal.net.GrpcTestCase<Void?, Void?>> {
     val ffiOut =
       NativeTesting.TESTING_ClearPushTokenTests()
@@ -733,6 +914,26 @@ public object NativeTestingNice {
     }, { identity(it) })(ffiOut)
   }
 
+  public fun TESTING_GetBackupCdnCredentialsTests(): List<org.signal.libsignal.net.GrpcTestCase<Int, org.signal.libsignal.internal.GetCdnCredentialsOut>> {
+    val ffiOut =
+      NativeTesting.TESTING_GetBackupCdnCredentialsTests()
+
+    return org.signal.libsignal.net.GrpcTestCase
+      .resultConverter<Int, Object, Int, org.signal.libsignal.internal.GetCdnCredentialsOut>({
+        identity(it)
+      }, { downcastFromObject<org.signal.libsignal.internal.GetCdnCredentialsOut>(it) })(ffiOut)
+  }
+
+  public fun TESTING_GetBackupSvrBCredentialsTests(): List<org.signal.libsignal.net.GrpcTestCase<Void?, org.signal.libsignal.internal.GetSvrBCredentialsOut>> {
+    val ffiOut =
+      NativeTesting.TESTING_GetBackupSvrBCredentialsTests()
+
+    return org.signal.libsignal.net.GrpcTestCase
+      .resultConverter<Void?, Object, Void?, org.signal.libsignal.internal.GetSvrBCredentialsOut>({
+        identity(it)
+      }, { downcastFromObject<org.signal.libsignal.internal.GetSvrBCredentialsOut>(it) })(ffiOut)
+  }
+
   public fun TESTING_GetDevicesTests(): List<org.signal.libsignal.net.GrpcTestCase<Void?, org.signal.libsignal.internal.GetDevicesOut>> {
     val ffiOut =
       NativeTesting.TESTING_GetDevicesTests()
@@ -761,6 +962,16 @@ public object NativeTestingNice {
       .resultConverter<Void?, Object, Void?, org.signal.libsignal.internal.GetMessageBackupInfoOut>({
         identity(it)
       }, { downcastFromObject<org.signal.libsignal.internal.GetMessageBackupInfoOut>(it) })(ffiOut)
+  }
+
+  public fun TESTING_LookUpUsernameLinkTests(): List<org.signal.libsignal.net.GrpcTestCase<org.signal.libsignal.internal.LookUpUsernameLinkArgs, org.signal.libsignal.internal.LookUpUsernameLinkOut>> {
+    val ffiOut =
+      NativeTesting.TESTING_LookUpUsernameLinkTests()
+
+    return org.signal.libsignal.net.GrpcTestCase
+      .resultConverter<Object, Object, org.signal.libsignal.internal.LookUpUsernameLinkArgs, org.signal.libsignal.internal.LookUpUsernameLinkOut>({
+        downcastFromObject<org.signal.libsignal.internal.LookUpUsernameLinkArgs>(it)
+      }, { downcastFromObject<org.signal.libsignal.internal.LookUpUsernameLinkOut>(it) })(ffiOut)
   }
 
   public fun TESTING_MySimpleTestEnum_BridgeVec_identity(
