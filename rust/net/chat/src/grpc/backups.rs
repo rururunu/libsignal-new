@@ -5,11 +5,13 @@
 
 use async_trait::async_trait;
 use futures_util::{Stream, TryFutureExt as _};
+use itertools::Itertools as _;
 use libsignal_account_keys::{
     MEDIA_ENCRYPTION_AES_KEY_LEN, MEDIA_ENCRYPTION_HMAC_KEY_LEN, MEDIA_ENCRYPTION_KEY_LEN,
     MEDIA_ID_LEN,
 };
 use libsignal_net_grpc::proto::chat::backup::backups_anonymous_client::BackupsAnonymousClient;
+use libsignal_net_grpc::proto::chat::backup::backups_client::BackupsClient;
 use libsignal_net_grpc::proto::chat::backup::get_upload_form_request::{
     MediaUploadType, MessagesUploadType, UploadType,
 };
@@ -18,12 +20,12 @@ use libsignal_net_grpc::proto::chat::backup::{
     DeleteMediaItem, DeleteMediaRequest, DeleteMediaResponse, GetBackupInfoRequest,
     GetCdnCredentialsRequest, GetCdnCredentialsResponse, GetMediaBackupInfoResponse,
     GetMessageBackupInfoResponse, GetSvrBCredentialsRequest, GetSvrBCredentialsResponse,
-    GetUploadFormRequest, GetUploadFormResponse, RefreshRequest, RefreshResponse,
-    SetPublicKeyRequest, SetPublicKeyResponse, SignedPresentation, backup_stream_closed,
-    copy_media_response, delete_all_response, get_cdn_credentials_response,
+    GetUploadFormRequest, GetUploadFormResponse, RedeemReceiptRequest, RedeemReceiptResponse,
+    RefreshRequest, RefreshResponse, SetPublicKeyRequest, SetPublicKeyResponse, SignedPresentation,
+    backup_stream_closed, copy_media_response, delete_all_response, get_cdn_credentials_response,
     get_media_backup_info_response, get_message_backup_info_response,
-    get_svr_b_credentials_response, get_upload_form_response, refresh_response,
-    set_public_key_response,
+    get_svr_b_credentials_response, get_upload_form_response, list_media_response,
+    redeem_receipt_response, refresh_response, set_public_key_response,
 };
 use libsignal_net_grpc::proto::chat::errors::{FailedPrecondition, FailedZkAuthentication};
 use libsignal_net_grpc::proto::chat::{backup as proto, common};
@@ -36,9 +38,9 @@ use crate::api::backups::{
     BackupAuth, BackupAuthCredentialRejected, BackupAuthPresentation, CdnCredentials,
     GetUploadFormFailure,
 };
-use crate::api::{RequestError, Unauth, UploadForm};
+use crate::api::{Auth, RequestError, Unauth, UploadForm};
 use crate::grpc::chunk_request;
-use crate::logging::{DebugByCalling, Redact};
+use crate::logging::{DebugByCalling, Redact, RedactBase64};
 
 impl From<BackupAuthPresentation> for SignedPresentation {
     fn from(value: BackupAuthPresentation) -> Self {
@@ -148,6 +150,43 @@ pub struct MediaBackupInfo {
     pub media_dir: String,
     /// The amount of space used to store media, in bytes.
     pub used_space: u64,
+}
+
+#[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
+pub struct ListMediaItem {
+    pub cdn: u32,
+    pub media_id: [u8; MEDIA_ID_LEN],
+    pub object_length: u64,
+}
+
+#[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
+pub struct ListMediaResponse {
+    /// The requested page of items.
+    pub items: Vec<ListMediaItem>,
+    /// The base directory of the backup data on the CDN.
+    ///
+    /// Always non-empty, even if no media has been stored to the CDN or the credential is for a
+    /// tier that does not support media.
+    pub backup_dir: String,
+    /// The prefix path component for media objects on a CDN.
+    ///
+    /// Stored media for a `media_id` can be found at `/backup_dir/media_dir/media_id`, where the
+    /// `media_id` is encoded in unpadded url-safe base64. Always non-empty, even if no media has
+    /// been stored to the CDN or the credential is for a tier that does not support media.
+    pub media_dir: String,
+    /// If set, the cursor value to pass to the next list request to continue listing. If absent,
+    /// all objects have been listed.
+    pub cursor: Option<String>,
+}
+
+#[derive(Debug, displaydoc::Display)]
+pub enum RedeemBackupReceiptFailure {
+    /// Account has no backup ID
+    MissingBackupId,
+    /// Receipt credential is invalid or expired
+    InvalidOrExpiredReceipt,
 }
 
 #[async_trait]
@@ -694,6 +733,120 @@ impl<T: GrpcServiceProvider> Unauth<T> {
             },
         )
     }
+
+    pub async fn list_backup_media(
+        &self,
+        auth: &BackupAuth<'_>,
+        cursor: Option<String>,
+        limit: Option<u32>,
+        rng: &mut (dyn rand::CryptoRng + Send),
+    ) -> Result<ListMediaResponse, RequestError<BackupAuthCredentialRejected>> {
+        let mut backup_service = BackupsAnonymousClient::new(self.0.service());
+
+        let auth = auth.present(rng)?;
+
+        let request = proto::ListMediaRequest {
+            signed_presentation: Some(auth.into()),
+            cursor,
+            limit,
+        };
+        let log_safe_description = Redact(&request).to_string();
+        let response: proto::ListMediaResponse =
+            log_and_send("unauth", &log_safe_description, || {
+                backup_service.list_media(request)
+            })
+            .await?
+            .into_inner();
+
+        let response = response.response.ok_or_else(|| RequestError::Unexpected {
+            log_safe: "missing response".to_owned(),
+        })?;
+        match response {
+            list_media_response::Response::ListResult(list_media_response::ListResult {
+                page,
+                backup_dir,
+                media_dir,
+                cursor,
+            }) => {
+                let items = page
+                    .into_iter()
+                    .map(
+                        |list_media_response::ListEntry {
+                             cdn,
+                             media_id,
+                             length,
+                         }| -> Result<_, RequestError<BackupAuthCredentialRejected>> {
+                            Ok(ListMediaItem {
+                                cdn,
+                                media_id: media_id[..].try_into().map_err(|_| {
+                                    RequestError::Unexpected {
+                                        log_safe: format!(
+                                            "malformed media id ({} bytes)",
+                                            media_id.len()
+                                        ),
+                                    }
+                                })?,
+                                object_length: length,
+                            })
+                        },
+                    )
+                    .try_collect()?;
+                Ok(ListMediaResponse {
+                    items,
+                    backup_dir,
+                    media_dir,
+                    cursor,
+                })
+            }
+            list_media_response::Response::FailedAuthentication(FailedZkAuthentication {
+                description,
+            }) => {
+                log::warn!("failed zk auth: {description}");
+                Err(RequestError::Other(BackupAuthCredentialRejected))
+            }
+        }
+    }
+}
+
+impl<T: GrpcServiceProvider> Auth<T> {
+    pub async fn redeem_backup_receipt(
+        &self,
+        presentation: zkgroup::receipts::ReceiptCredentialPresentation,
+    ) -> Result<(), RequestError<RedeemBackupReceiptFailure>> {
+        let mut service = BackupsClient::new(self.0.service());
+        let request = RedeemReceiptRequest {
+            presentation: zkgroup::serialize(&presentation),
+        };
+        let log_safe_description = Redact(&request).to_string();
+        let response: RedeemReceiptResponse = log_and_send("auth", &log_safe_description, || {
+            service.redeem_receipt(request)
+        })
+        .await?
+        .into_inner();
+
+        let response = response.response.ok_or_else(|| RequestError::Unexpected {
+            log_safe: "missing response".to_owned(),
+        })?;
+        match response {
+            redeem_receipt_response::Response::Success(()) => Ok(()),
+            redeem_receipt_response::Response::AccountMissingCommitment(FailedPrecondition {
+                description,
+            }) => {
+                log::warn!("account missing commitment: {description}");
+                Err(RequestError::Other(
+                    RedeemBackupReceiptFailure::MissingBackupId,
+                ))
+            }
+            redeem_receipt_response::Response::InvalidReceipt(FailedPrecondition {
+                description,
+            }) => {
+                log::warn!("invalid receipt: {description}");
+                Err(RequestError::Other(
+                    RedeemBackupReceiptFailure::InvalidOrExpiredReceipt,
+                ))
+            }
+        }
+    }
 }
 
 // Factored out so it can be shared between `get_upload_form` and `get_media_upload_form`.
@@ -814,6 +967,22 @@ impl std::fmt::Display for Redact<DeleteMediaRequest> {
     }
 }
 
+impl std::fmt::Display for Redact<proto::ListMediaRequest> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self(proto::ListMediaRequest {
+            signed_presentation: _,
+            cursor,
+            limit,
+        }) = self;
+        f.debug_struct("ListMediaRequest")
+            // This isn't guaranteed to be base64, but it is today,
+            // and our base64 redaction is pretty minimal anyway.
+            .field("cursor", &cursor.as_deref().map(RedactBase64))
+            .field("limit", limit)
+            .finish()
+    }
+}
+
 macro_rules! redact_no_arg_backup_request {
     ($name:ident) => {
         impl std::fmt::Display for Redact<$name> {
@@ -833,6 +1002,14 @@ redact_no_arg_backup_request!(GetSvrBCredentialsRequest);
 redact_no_arg_backup_request!(GetBackupInfoRequest);
 redact_no_arg_backup_request!(RefreshRequest);
 redact_no_arg_backup_request!(DeleteAllRequest);
+
+impl std::fmt::Display for Redact<RedeemReceiptRequest> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self(RedeemReceiptRequest { presentation: _ }) = self;
+        f.debug_struct("RedeemReceiptRequest")
+            .finish_non_exhaustive()
+    }
+}
 
 // Not cfg(test) so it can be accessed via bridging tests.
 pub mod test_cases {
@@ -1186,6 +1363,34 @@ pub mod test_cases {
             presentation: BackupAuth::EXPECTED_TEST_PRESENTATION.to_vec(),
             presentation_signature: BackupAuth::EXPECTED_TEST_SIGNATURE.to_vec(),
         }
+    }
+
+    /// A structurally-valid receipt credential presentation.
+    ///
+    /// Our tests never actually verify these presentations, so it's fine that the server params are synthetic.
+    fn test_backup_receipt_credential_presentation()
+    -> zkgroup::receipts::ReceiptCredentialPresentation {
+        let server_keys =
+            zkgroup::server_params::ServerSecretParams::generate([b's'; zkgroup::RANDOMNESS_LEN]);
+        let server_public = server_keys.get_public_params();
+
+        let context = server_public.create_receipt_credential_request_context(
+            [b'r'; zkgroup::RANDOMNESS_LEN],
+            [b'r'; zkgroup::RECEIPT_SERIAL_LEN],
+        );
+        let request = context.get_request();
+        let expiration = zkgroup::Timestamp::from_epoch_seconds(1771545600); // 2026-02-20 00:00
+        let response = server_keys.issue_receipt_credential(
+            [b'i'; zkgroup::RANDOMNESS_LEN],
+            &request,
+            expiration,
+            200,
+        );
+        let credential = server_public
+            .receive_receipt_credential(&context, &response)
+            .expect("valid");
+        server_public
+            .create_receipt_credential_presentation([b'p'; zkgroup::RANDOMNESS_LEN], &credential)
     }
 
     #[derive(Debug)]
@@ -1597,6 +1802,329 @@ pub mod test_cases {
             },
         ]
     }
+
+    pub struct ListMediaArgs {
+        pub cursor: Option<String>,
+        pub limit: Option<u32>,
+    }
+    pub enum ListMediaOut {
+        Page(ListMediaResponse),
+        MalformedMediaId,
+        CredentialRejected,
+        MissingResponse,
+    }
+
+    pub fn list_media_test_cases() -> Vec<
+        GrpcTestCase<
+            ListMediaArgs,
+            proto::ListMediaRequest,
+            proto::ListMediaResponse,
+            ListMediaOut,
+        >,
+    > {
+        let method = "/org.signal.chat.backup.BackupsAnonymous/ListMedia";
+        vec![
+            GrpcTestCase {
+                name: "first page".to_owned(),
+                method: method.to_owned(),
+                request: ListMediaArgs {
+                    cursor: None,
+                    limit: Some(500),
+                },
+                request_grpc: proto::ListMediaRequest {
+                    signed_presentation: Some(test_signed_presentation()),
+                    cursor: None,
+                    limit: Some(500),
+                },
+                response_grpc: proto::ListMediaResponse {
+                    response: Some(list_media_response::Response::ListResult(
+                        list_media_response::ListResult {
+                            page: vec![
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![1; MEDIA_ID_LEN],
+                                    length: 1000,
+                                },
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![2; MEDIA_ID_LEN],
+                                    length: 2000,
+                                },
+                            ],
+                            backup_dir: "/backups".to_owned(),
+                            media_dir: "/backup-media".to_owned(),
+                            cursor: Some("abcd1234".to_owned()),
+                        },
+                    )),
+                },
+                response: ListMediaOut::Page(ListMediaResponse {
+                    items: vec![
+                        ListMediaItem {
+                            cdn: 8,
+                            media_id: [1; MEDIA_ID_LEN],
+                            object_length: 1000,
+                        },
+                        ListMediaItem {
+                            cdn: 8,
+                            media_id: [2; MEDIA_ID_LEN],
+                            object_length: 2000,
+                        },
+                    ],
+                    backup_dir: "/backups".to_owned(),
+                    media_dir: "/backup-media".to_owned(),
+                    cursor: Some("abcd1234".to_owned()),
+                }),
+            },
+            GrpcTestCase {
+                name: "first page (unlimited)".to_owned(),
+                method: method.to_owned(),
+                request: ListMediaArgs {
+                    cursor: None,
+                    limit: None,
+                },
+                request_grpc: proto::ListMediaRequest {
+                    signed_presentation: Some(test_signed_presentation()),
+                    cursor: None,
+                    limit: None,
+                },
+                response_grpc: proto::ListMediaResponse {
+                    response: Some(list_media_response::Response::ListResult(
+                        list_media_response::ListResult {
+                            page: vec![
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![1; MEDIA_ID_LEN],
+                                    length: 1000,
+                                },
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![2; MEDIA_ID_LEN],
+                                    length: 2000,
+                                },
+                            ],
+                            backup_dir: "/backups".to_owned(),
+                            media_dir: "/backup-media".to_owned(),
+                            cursor: Some("abcd1234".to_owned()),
+                        },
+                    )),
+                },
+                response: ListMediaOut::Page(ListMediaResponse {
+                    items: vec![
+                        ListMediaItem {
+                            cdn: 8,
+                            media_id: [1; MEDIA_ID_LEN],
+                            object_length: 1000,
+                        },
+                        ListMediaItem {
+                            cdn: 8,
+                            media_id: [2; MEDIA_ID_LEN],
+                            object_length: 2000,
+                        },
+                    ],
+                    backup_dir: "/backups".to_owned(),
+                    media_dir: "/backup-media".to_owned(),
+                    cursor: Some("abcd1234".to_owned()),
+                }),
+            },
+            GrpcTestCase {
+                name: "last page".to_owned(),
+                method: method.to_owned(),
+                request: ListMediaArgs {
+                    cursor: Some("abcd1234".to_owned()),
+                    limit: Some(500),
+                },
+                request_grpc: proto::ListMediaRequest {
+                    signed_presentation: Some(test_signed_presentation()),
+                    cursor: Some("abcd1234".to_owned()),
+                    limit: Some(500),
+                },
+                response_grpc: proto::ListMediaResponse {
+                    response: Some(list_media_response::Response::ListResult(
+                        list_media_response::ListResult {
+                            page: vec![
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![8; MEDIA_ID_LEN],
+                                    length: 8000,
+                                },
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![9; MEDIA_ID_LEN],
+                                    length: 9000,
+                                },
+                            ],
+                            backup_dir: "/backups".to_owned(),
+                            media_dir: "/backup-media".to_owned(),
+                            cursor: None,
+                        },
+                    )),
+                },
+                response: ListMediaOut::Page(ListMediaResponse {
+                    items: vec![
+                        ListMediaItem {
+                            cdn: 8,
+                            media_id: [8; MEDIA_ID_LEN],
+                            object_length: 8000,
+                        },
+                        ListMediaItem {
+                            cdn: 8,
+                            media_id: [9; MEDIA_ID_LEN],
+                            object_length: 9000,
+                        },
+                    ],
+                    backup_dir: "/backups".to_owned(),
+                    media_dir: "/backup-media".to_owned(),
+                    cursor: None,
+                }),
+            },
+            GrpcTestCase {
+                name: "malformed media ID".to_owned(),
+                method: method.to_owned(),
+                request: ListMediaArgs {
+                    cursor: None,
+                    limit: Some(500),
+                },
+                request_grpc: proto::ListMediaRequest {
+                    signed_presentation: Some(test_signed_presentation()),
+                    cursor: None,
+                    limit: Some(500),
+                },
+                response_grpc: proto::ListMediaResponse {
+                    response: Some(list_media_response::Response::ListResult(
+                        list_media_response::ListResult {
+                            page: vec![
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![1; MEDIA_ID_LEN],
+                                    length: 1000,
+                                },
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![2; MEDIA_ID_LEN - 1],
+                                    length: 2000,
+                                },
+                                list_media_response::ListEntry {
+                                    cdn: 8,
+                                    media_id: vec![3; MEDIA_ID_LEN],
+                                    length: 3000,
+                                },
+                            ],
+                            backup_dir: "/backups".to_owned(),
+                            media_dir: "/backup-media".to_owned(),
+                            cursor: Some("abcd1234".to_owned()),
+                        },
+                    )),
+                },
+                response: ListMediaOut::MalformedMediaId,
+            },
+            GrpcTestCase {
+                name: "credential rejected".to_owned(),
+                method: method.to_owned(),
+                request: ListMediaArgs {
+                    cursor: None,
+                    limit: Some(500),
+                },
+                request_grpc: proto::ListMediaRequest {
+                    signed_presentation: Some(test_signed_presentation()),
+                    cursor: None,
+                    limit: Some(500),
+                },
+                response_grpc: proto::ListMediaResponse {
+                    response: Some(list_media_response::Response::FailedAuthentication(
+                        FailedZkAuthentication {
+                            description: "bad!".to_owned(),
+                        },
+                    )),
+                },
+                response: ListMediaOut::CredentialRejected,
+            },
+            GrpcTestCase {
+                name: "missing response".to_owned(),
+                method: method.to_owned(),
+                request: ListMediaArgs {
+                    cursor: None,
+                    limit: Some(500),
+                },
+                request_grpc: proto::ListMediaRequest {
+                    signed_presentation: Some(test_signed_presentation()),
+                    cursor: None,
+                    limit: Some(500),
+                },
+                response_grpc: proto::ListMediaResponse { response: None },
+                response: ListMediaOut::MissingResponse,
+            },
+        ]
+    }
+
+    pub enum RedeemBackupReceiptOut {
+        Success,
+        InvalidReceipt,
+        MissingBackupId,
+        MissingResponse,
+    }
+
+    pub fn redeem_receipt_test_cases() -> Vec<
+        GrpcTestCase<
+            zkgroup::receipts::ReceiptCredentialPresentation,
+            RedeemReceiptRequest,
+            RedeemReceiptResponse,
+            RedeemBackupReceiptOut,
+        >,
+    > {
+        let method = "/org.signal.chat.backup.Backups/RedeemReceipt";
+        let presentation = test_backup_receipt_credential_presentation();
+        let request_grpc = RedeemReceiptRequest {
+            presentation: zkgroup::serialize(&presentation),
+        };
+        vec![
+            GrpcTestCase {
+                name: "success".to_owned(),
+                method: method.to_owned(),
+                request: presentation.clone(),
+                request_grpc: request_grpc.clone(),
+                response_grpc: RedeemReceiptResponse {
+                    response: Some(redeem_receipt_response::Response::Success(())),
+                },
+                response: RedeemBackupReceiptOut::Success,
+            },
+            GrpcTestCase {
+                name: "credential rejected".to_owned(),
+                method: method.to_owned(),
+                request: presentation.clone(),
+                request_grpc: request_grpc.clone(),
+                response_grpc: RedeemReceiptResponse {
+                    response: Some(redeem_receipt_response::Response::InvalidReceipt(
+                        FailedPrecondition {
+                            description: "bad!".to_owned(),
+                        },
+                    )),
+                },
+                response: RedeemBackupReceiptOut::InvalidReceipt,
+            },
+            GrpcTestCase {
+                name: "missing ID".to_owned(),
+                method: method.to_owned(),
+                request: presentation.clone(),
+                request_grpc: request_grpc.clone(),
+                response_grpc: RedeemReceiptResponse {
+                    response: Some(redeem_receipt_response::Response::AccountMissingCommitment(
+                        FailedPrecondition {
+                            description: "no ID".to_owned(),
+                        },
+                    )),
+                },
+                response: RedeemBackupReceiptOut::MissingBackupId,
+            },
+            GrpcTestCase {
+                name: "missing response".to_owned(),
+                method: method.to_owned(),
+                request: presentation,
+                request_grpc,
+                response_grpc: RedeemReceiptResponse { response: None },
+                response: RedeemBackupReceiptOut::MissingResponse,
+            },
+        ]
+    }
 }
 
 #[cfg(test)]
@@ -1615,6 +2143,7 @@ mod test {
 
     use super::test_cases::backup_stream_unauthorized;
     use super::*;
+    use crate::api::DisconnectedError;
     use crate::api::backups::UnauthenticatedChatApi;
     use crate::api::testutil::fixed_seed_test_rng;
     use crate::grpc::test_case_util::stream;
@@ -1674,7 +2203,7 @@ mod test {
     #[test_case(ok(GetUploadFormResponse {
         response: None,
     }) => matches Err(RequestError::Unexpected { .. }))]
-    #[test_case(err(tonic::Code::Internal) => matches Err(RequestError::Unexpected { .. }))]
+    #[test_case(err(tonic::Code::Internal) => matches Err(RequestError::Disconnected(DisconnectedError::Transport { .. })))]
     fn test_get_upload_form(
         response: http::Response<BodyWithTrailers>,
     ) -> Result<UploadForm, RequestError<GetUploadFormFailure>> {
@@ -1738,7 +2267,7 @@ mod test {
     #[test_case(ok(GetUploadFormResponse {
         response: None,
     }) => matches Err(RequestError::Unexpected { .. }))]
-    #[test_case(err(tonic::Code::Internal) => matches Err(RequestError::Unexpected { .. }))]
+    #[test_case(err(tonic::Code::Internal) => matches Err(RequestError::Disconnected(DisconnectedError::Transport { .. })))]
     fn test_get_media_upload_form(
         response: http::Response<BodyWithTrailers>,
     ) -> Result<UploadForm, RequestError<GetUploadFormFailure>> {
@@ -2404,6 +2933,83 @@ mod test {
                 .as_ref()
                 .expect_err("should have failed"),
             RequestError::Other(BackupAuthCredentialRejected)
+        );
+    }
+
+    #[test]
+    fn test_list_media() {
+        use super::test_cases::*;
+        run_tests(
+            list_media_test_cases(),
+            |chat: Unauth<_>, ListMediaArgs { cursor, limit }| async move {
+                chat.list_backup_media(
+                    &BackupAuth::generate_for_testing(
+                        zkgroup::backups::BackupCredentialType::Media,
+                        &mut fixed_seed_test_rng(),
+                    ),
+                    cursor,
+                    limit,
+                    &mut fixed_seed_test_rng(),
+                )
+                .await
+            },
+            |resp, result| match resp {
+                ListMediaOut::Page(expected) => {
+                    assert_eq!(expected, result.expect("success"))
+                }
+                ListMediaOut::MalformedMediaId => {
+                    assert_matches!(
+                        result,
+                        Err(RequestError::Unexpected { log_safe }) if log_safe == "malformed media id (14 bytes)"
+                    )
+                }
+                ListMediaOut::CredentialRejected => {
+                    assert_matches!(
+                        result,
+                        Err(RequestError::Other(BackupAuthCredentialRejected))
+                    )
+                }
+                ListMediaOut::MissingResponse => {
+                    assert_matches!(
+                        result,
+                        Err(RequestError::Unexpected { log_safe }) if log_safe == "missing response"
+                    )
+                }
+            },
+        );
+    }
+
+    #[test]
+    fn test_redeem_receipt() {
+        use super::test_cases::*;
+        run_tests(
+            redeem_receipt_test_cases(),
+            |chat: Auth<_>, presentation| async move { chat.redeem_backup_receipt(presentation).await },
+            |resp, result| match resp {
+                RedeemBackupReceiptOut::Success => result.expect("success"),
+                RedeemBackupReceiptOut::InvalidReceipt => {
+                    assert_matches!(
+                        result,
+                        Err(RequestError::Other(
+                            RedeemBackupReceiptFailure::InvalidOrExpiredReceipt
+                        ))
+                    )
+                }
+                RedeemBackupReceiptOut::MissingBackupId => {
+                    assert_matches!(
+                        result,
+                        Err(RequestError::Other(
+                            RedeemBackupReceiptFailure::MissingBackupId
+                        ))
+                    )
+                }
+                RedeemBackupReceiptOut::MissingResponse => {
+                    assert_matches!(
+                        result,
+                        Err(RequestError::Unexpected { log_safe }) if log_safe == "missing response"
+                    )
+                }
+            },
         );
     }
 }

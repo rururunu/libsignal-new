@@ -1,3 +1,5 @@
-v0.99.2
+v0.101.2
 
-- node: Expose Svr2BackupSession serialize()/deserialize()
+- SVR: new staging releases for SVRB and SVR2 in staging
+- Typed APIs:
+  - AuthBackupsService.redeemBackupReceipt

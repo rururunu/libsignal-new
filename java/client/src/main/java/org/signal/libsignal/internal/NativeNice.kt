@@ -8,8 +8,10 @@
 @file:Suppress(
   "ktlint:standard:function-naming",
   "ktlint:standard:property-naming",
+  "ktlint:standard:class-naming",
   "ktlint:standard:filename",
   "ktlint:standard:max-line-length",
+  "ktlint:standard:no-consecutive-comments",
   "PLATFORM_CLASS_MAPPED_TO_KOTLIN",
 )
 
@@ -23,316 +25,535 @@ import org.signal.libsignal.internal.NativeNiceHelpers.mapBridgeVecReturn
 import org.signal.libsignal.internal.NativeNiceHelpers.mapPair
 
 public data class BridgeCopyBackupMediaItem(
-  val sourceAttachmentCdn: Int,
-  val sourceKey: String,
-  val objectLength: Long,
-  val mediaId: ByteArray,
-  val encryptionKey: ByteArray,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      source_attachment_cdn: Any?,
-      source_key: Any?,
-      object_length: Any?,
-      media_id: Any?,
-      encryption_key: Any?,
-    ): BridgeCopyBackupMediaItem =
-      BridgeCopyBackupMediaItem(
-        sourceAttachmentCdn =
-          identity(source_attachment_cdn as Int),
-        sourceKey =
-          identity(source_key as String),
-        objectLength =
-          identity(object_length as Long),
-        mediaId =
-          identity(media_id as ByteArray),
-        encryptionKey =
-          identity(encryption_key as ByteArray),
-      )
-  }
-
-  @CalledFromNative
-  @Suppress("ktlint:standard:backing-property-naming")
-  public class FfiArgType {
-    @CalledFromNative
-    internal val source_attachment_cdn: Int
-
-    @CalledFromNative
-    internal val source_key: Any?
-
-    @CalledFromNative
-    internal val object_length: Long
-
-    @CalledFromNative
-    internal val media_id: Any?
-
-    @CalledFromNative
-    internal val encryption_key: Any?
-    internal constructor(
-      source_attachment_cdn: Int,
-      source_key: Any?,
-      object_length: Long,
-      media_id: Any?,
-      encryption_key: Any?,
-    ) {
-      this.source_attachment_cdn = source_attachment_cdn
-      this.source_key = source_key
-      this.object_length = object_length
-      this.media_id = media_id
-      this.encryption_key = encryption_key
-    }
-  }
-
-  internal fun toFfiArgType(): FfiArgType =
-    FfiArgType(
-      source_attachment_cdn = identity(sourceAttachmentCdn),
-      source_key = identity(sourceKey),
-      object_length = identity(objectLength),
-      media_id = identity(mediaId),
-      encryption_key = identity(encryptionKey),
-    )
-}
-
-internal fun BridgeCopyBackupMediaItem.toFfiArgTypeObject(): Object = convertToObject(this.toFfiArgType())
+  public val sourceAttachmentCdn: Int,
+  public val sourceKey: String,
+  public val objectLength: Long,
+  public val mediaId: ByteArray,
+  public val encryptionKey: ByteArray,
+)
 
 public data class BridgeCopyBackupMediaOutcome(
-  val mediaId: ByteArray,
-  val result: org.signal.libsignal.internal.BridgeCopyBackupMediaResult,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      media_id: Any?,
-      result: Any?,
-    ): BridgeCopyBackupMediaOutcome =
-      BridgeCopyBackupMediaOutcome(
-        mediaId =
-          identity(media_id as ByteArray),
-        result =
-          downcastFromObject<org.signal.libsignal.internal.BridgeCopyBackupMediaResult>(
-            result as Object,
-          ),
-      )
-  }
-}
+  public val mediaId: ByteArray,
+  public val result: org.signal.libsignal.internal.BridgeCopyBackupMediaResult,
+)
 
 public sealed class BridgeCopyBackupMediaResult {
   public data class Success(
-    val cdn: Int,
-  ) : BridgeCopyBackupMediaResult() {
-    public companion object {
-      @JvmStatic
-      @JvmName("fromNative")
-      @CalledFromNative
-      internal fun fromNative(cdn: Any?): Success =
-        Success(
-          cdn =
-            identity(cdn as Int),
-        )
-    }
-  }
+    public val cdn: Int,
+  ) : BridgeCopyBackupMediaResult()
 
-  public data object SourceNotFound : BridgeCopyBackupMediaResult() {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(): SourceNotFound = SourceNotFound
-  }
+  public data object SourceNotFound : BridgeCopyBackupMediaResult()
 
-  public data object WrongSourceLength : BridgeCopyBackupMediaResult() {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(): WrongSourceLength = WrongSourceLength
-  }
+  public data object WrongSourceLength : BridgeCopyBackupMediaResult()
 
-  public data object OutOfSpace : BridgeCopyBackupMediaResult() {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(): OutOfSpace = OutOfSpace
-  }
+  public data object OutOfSpace : BridgeCopyBackupMediaResult()
 }
 
 public data class BridgeDeleteBackupMediaItem(
-  val mediaId: ByteArray,
-  val cdn: Int,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      media_id: Any?,
-      cdn: Any?,
-    ): BridgeDeleteBackupMediaItem =
-      BridgeDeleteBackupMediaItem(
-        mediaId =
-          identity(media_id as ByteArray),
-        cdn =
-          identity(cdn as Int),
-      )
-  }
+  public val mediaId: ByteArray,
+  public val cdn: Int,
+)
 
+public data class BridgeMediaBackupInfo(
+  public val backupDir: String,
+  public val mediaDir: String,
+  public val usedSpace: Long,
+)
+
+public data class BridgeMessageBackupInfo(
+  public val backupDir: String,
+  public val cdn: Int,
+  public val backupName: String,
+)
+
+/*
+// org.signal.libsignal.net.CallQualitySurvey
+
+public data class CallQualitySurveyInternal(
+  public val userSatisfied: Boolean,
+  public val callQualityIssues: List<String>,
+  public val additionalIssuesDescription: String?,
+  public val debugLogUrl: String?,
+  public val startTimestamp: java.time.Instant,
+  public val endTimestamp: java.time.Instant,
+  public val callType: String,
+  public val success: Boolean,
+  public val callEndReason: String,
+  public val connectionRttMedian: Float?,
+  public val audioRttMedian: Float?,
+  public val videoRttMedian: Float?,
+  public val audioRecvJitterMedian: Float?,
+  public val videoRecvJitterMedian: Float?,
+  public val audioSendJitterMedian: Float?,
+  public val videoSendJitterMedian: Float?,
+  public val audioRecvPacketLossFraction: Float?,
+  public val videoRecvPacketLossFraction: Float?,
+  public val audioSendPacketLossFraction: Float?,
+  public val videoSendPacketLossFraction: Float?,
+  public val callTelemetry: ByteArray?,
+  public val callIdHash: ByteArray?,
+)
+
+*/
+
+public data class CopyBackupMediaNextChunk(
+  public val chunk: List<org.signal.libsignal.internal.BridgeCopyBackupMediaOutcome>,
+  public val termination: Any?,
+)
+
+public data class DeleteBackupMediaNextChunk(
+  public val chunk: List<org.signal.libsignal.internal.BridgeDeleteBackupMediaItem>,
+  public val termination: Any?,
+)
+
+/*
+// org.signal.libsignal.net.LinkedDevice
+
+public data class LinkedDeviceInternal(
+  public val id: org.signal.libsignal.protocol.DeviceId,
+  public val encryptedName: ByteArray,
+  public val lastSeen: java.time.Instant,
+  public val registrationId: Int,
+  public val createdAtCiphertext: ByteArray,
+)
+
+*/
+
+public data class ListMediaItem(
+  public val cdn: Int,
+  public val mediaId: ByteArray,
+  public val objectLength: Long,
+)
+
+public data class ListMediaResponse(
+  public val items: List<org.signal.libsignal.internal.ListMediaItem>,
+  public val backupDir: String,
+  public val mediaDir: String,
+  public val cursor: String?,
+)
+
+public object BridgeCopyBackupMediaOutcome_ReturnConverter {
   @CalledFromNative
-  @Suppress("ktlint:standard:backing-property-naming")
-  public class FfiArgType {
-    @CalledFromNative
-    internal val media_id: Any?
-
-    @CalledFromNative
-    internal val cdn: Int
-    internal constructor(
-      media_id: Any?,
-      cdn: Int,
-    ) {
-      this.media_id = media_id
-      this.cdn = cdn
-    }
-  }
-
-  internal fun toFfiArgType(): FfiArgType =
-    FfiArgType(
-      media_id = identity(mediaId),
-      cdn = identity(cdn),
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    media_id: Any?,
+    result: Any?,
+  ): Any? =
+    BridgeCopyBackupMediaOutcome(
+      mediaId =
+        identity(media_id as ByteArray),
+      result =
+        downcastFromObject<org.signal.libsignal.internal.BridgeCopyBackupMediaResult>(result as Object),
     )
 }
 
-internal fun BridgeDeleteBackupMediaItem.toFfiArgTypeObject(): Object = convertToObject(this.toFfiArgType())
+public object BridgeCopyBackupMediaResult_Success_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(cdn: Any?): Any? =
+    BridgeCopyBackupMediaResult.Success(
+      cdn =
+        identity(cdn as Int),
+    )
+}
 
-public data class BridgeMediaBackupInfo(
-  val backupDir: String,
-  val mediaDir: String,
-  val usedSpace: Long,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      backup_dir: Any?,
-      media_dir: Any?,
-      used_space: Any?,
-    ): BridgeMediaBackupInfo =
-      BridgeMediaBackupInfo(
-        backupDir =
-          identity(backup_dir as String),
-        mediaDir =
-          identity(media_dir as String),
-        usedSpace =
-          identity(used_space as Long),
-      )
+public object BridgeCopyBackupMediaResult_SourceNotFound_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(): Any? = BridgeCopyBackupMediaResult.SourceNotFound
+}
+
+public object BridgeCopyBackupMediaResult_WrongSourceLength_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(): Any? = BridgeCopyBackupMediaResult.WrongSourceLength
+}
+
+public object BridgeCopyBackupMediaResult_OutOfSpace_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(): Any? = BridgeCopyBackupMediaResult.OutOfSpace
+}
+
+public object BridgeDeleteBackupMediaItem_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    media_id: Any?,
+    cdn: Any?,
+  ): Any? =
+    BridgeDeleteBackupMediaItem(
+      mediaId =
+        identity(media_id as ByteArray),
+      cdn =
+        identity(cdn as Int),
+    )
+}
+
+public object BridgeMediaBackupInfo_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    backup_dir: Any?,
+    media_dir: Any?,
+    used_space: Any?,
+  ): Any? =
+    BridgeMediaBackupInfo(
+      backupDir =
+        identity(backup_dir as String),
+      mediaDir =
+        identity(media_dir as String),
+      usedSpace =
+        identity(used_space as Long),
+    )
+}
+
+public object BridgeMessageBackupInfo_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    backup_dir: Any?,
+    cdn: Any?,
+    backup_name: Any?,
+  ): Any? =
+    BridgeMessageBackupInfo(
+      backupDir =
+        identity(backup_dir as String),
+      cdn =
+        identity(cdn as Int),
+      backupName =
+        identity(backup_name as String),
+    )
+}
+
+public object CopyBackupMediaNextChunk_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    chunk: Any?,
+    termination: Any?,
+  ): Any? =
+    CopyBackupMediaNextChunk(
+      chunk =
+        mapBridgeVecReturn<Object, org.signal.libsignal.internal.BridgeCopyBackupMediaOutcome>({
+          downcastFromObject<org.signal.libsignal.internal.BridgeCopyBackupMediaOutcome>(it)
+        })(chunk as Array<*>),
+      termination =
+        identity(termination as Object?),
+    )
+}
+
+public object DeleteBackupMediaNextChunk_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    chunk: Any?,
+    termination: Any?,
+  ): Any? =
+    DeleteBackupMediaNextChunk(
+      chunk =
+        mapBridgeVecReturn<Object, org.signal.libsignal.internal.BridgeDeleteBackupMediaItem>({
+          downcastFromObject<org.signal.libsignal.internal.BridgeDeleteBackupMediaItem>(it)
+        })(chunk as Array<*>),
+      termination =
+        identity(termination as Object?),
+    )
+}
+
+public object LinkedDeviceInternal_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    id: Any?,
+    encrypted_name: Any?,
+    last_seen: Any?,
+    registration_id: Any?,
+    created_at_ciphertext: Any?,
+  ): Any? =
+    org.signal.libsignal.net.LinkedDevice(
+      id =
+        identity(id as org.signal.libsignal.protocol.DeviceId),
+      encryptedName =
+        identity(encrypted_name as ByteArray),
+      lastSeen =
+        (java.time.Instant::ofEpochMilli)(last_seen as Long),
+      registrationId =
+        identity(registration_id as Int),
+      createdAtCiphertext =
+        identity(created_at_ciphertext as ByteArray),
+    )
+}
+
+public object ListMediaItem_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    cdn: Any?,
+    media_id: Any?,
+    object_length: Any?,
+  ): Any? =
+    ListMediaItem(
+      cdn =
+        identity(cdn as Int),
+      mediaId =
+        identity(media_id as ByteArray),
+      objectLength =
+        identity(object_length as Long),
+    )
+}
+
+public object ListMediaResponse_ReturnConverter {
+  @CalledFromNative
+  @JvmStatic
+  @JvmName("fromNative")
+  internal fun fromNative(
+    items: Any?,
+    backup_dir: Any?,
+    media_dir: Any?,
+    cursor: Any?,
+  ): Any? =
+    ListMediaResponse(
+      items =
+        mapBridgeVecReturn<Object, org.signal.libsignal.internal.ListMediaItem>({
+          downcastFromObject<org.signal.libsignal.internal.ListMediaItem>(it)
+        })(items as Array<*>),
+      backupDir =
+        identity(backup_dir as String),
+      mediaDir =
+        identity(media_dir as String),
+      cursor =
+        identity(cursor as String?),
+    )
+}
+
+@CalledFromNative
+@Suppress("ktlint:standard:backing-property-naming")
+public class BridgeCopyBackupMediaItem_FfiArgType {
+  @CalledFromNative
+  internal val source_attachment_cdn: Int
+
+  @CalledFromNative
+  internal val source_key: Any?
+
+  @CalledFromNative
+  internal val object_length: Long
+
+  @CalledFromNative
+  internal val media_id: Any?
+
+  @CalledFromNative
+  internal val encryption_key: Any?
+  internal constructor(
+    source_attachment_cdn: Int,
+    source_key: Any?,
+    object_length: Long,
+    media_id: Any?,
+    encryption_key: Any?,
+  ) {
+    this.source_attachment_cdn = source_attachment_cdn
+    this.source_key = source_key
+    this.object_length = object_length
+    this.media_id = media_id
+    this.encryption_key = encryption_key
   }
 }
 
-public data class BridgeMessageBackupInfo(
-  val backupDir: String,
-  val cdn: Int,
-  val backupName: String,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      backup_dir: Any?,
-      cdn: Any?,
-      backup_name: Any?,
-    ): BridgeMessageBackupInfo =
-      BridgeMessageBackupInfo(
-        backupDir =
-          identity(backup_dir as String),
-        cdn =
-          identity(cdn as Int),
-        backupName =
-          identity(backup_name as String),
-      )
+public fun BridgeCopyBackupMediaItem.toFfiArgType(): BridgeCopyBackupMediaItem_FfiArgType =
+  BridgeCopyBackupMediaItem_FfiArgType(
+    source_attachment_cdn = identity(sourceAttachmentCdn),
+    source_key = identity(sourceKey),
+    object_length = identity(objectLength),
+    media_id = identity(mediaId),
+    encryption_key = identity(encryptionKey),
+  )
+
+public fun BridgeCopyBackupMediaItem.toFfiArgTypeObject(): Object = convertToObject(this.toFfiArgType())
+
+@CalledFromNative
+@Suppress("ktlint:standard:backing-property-naming")
+public class BridgeDeleteBackupMediaItem_FfiArgType {
+  @CalledFromNative
+  internal val media_id: Any?
+
+  @CalledFromNative
+  internal val cdn: Int
+  internal constructor(
+    media_id: Any?,
+    cdn: Int,
+  ) {
+    this.media_id = media_id
+    this.cdn = cdn
   }
 }
 
-public data class CopyBackupMediaNextChunk(
-  val chunk: List<org.signal.libsignal.internal.BridgeCopyBackupMediaOutcome>,
-  val termination: Any?,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      chunk: Any?,
-      termination: Any?,
-    ): CopyBackupMediaNextChunk =
-      CopyBackupMediaNextChunk(
-        chunk =
-          mapBridgeVecReturn<Object, org.signal.libsignal.internal.BridgeCopyBackupMediaOutcome>({
-            downcastFromObject<org.signal.libsignal.internal.BridgeCopyBackupMediaOutcome>(it)
-          })(chunk as Array<*>),
-        termination =
-          identity(termination as Object?),
-      )
+public fun BridgeDeleteBackupMediaItem.toFfiArgType(): BridgeDeleteBackupMediaItem_FfiArgType =
+  BridgeDeleteBackupMediaItem_FfiArgType(
+    media_id = identity(mediaId),
+    cdn = identity(cdn),
+  )
+
+public fun BridgeDeleteBackupMediaItem.toFfiArgTypeObject(): Object = convertToObject(this.toFfiArgType())
+
+@CalledFromNative
+@Suppress("ktlint:standard:backing-property-naming")
+public class CallQualitySurveyInternal_FfiArgType {
+  @CalledFromNative
+  internal val user_satisfied: Boolean
+
+  @CalledFromNative
+  internal val call_quality_issues: Any?
+
+  @CalledFromNative
+  internal val additional_issues_description: Any?
+
+  @CalledFromNative
+  internal val debug_log_url: Any?
+
+  @CalledFromNative
+  internal val start_timestamp: Long
+
+  @CalledFromNative
+  internal val end_timestamp: Long
+
+  @CalledFromNative
+  internal val call_type: Any?
+
+  @CalledFromNative
+  internal val success: Boolean
+
+  @CalledFromNative
+  internal val call_end_reason: Any?
+
+  @CalledFromNative
+  internal val connection_rtt_median: Any?
+
+  @CalledFromNative
+  internal val audio_rtt_median: Any?
+
+  @CalledFromNative
+  internal val video_rtt_median: Any?
+
+  @CalledFromNative
+  internal val audio_recv_jitter_median: Any?
+
+  @CalledFromNative
+  internal val video_recv_jitter_median: Any?
+
+  @CalledFromNative
+  internal val audio_send_jitter_median: Any?
+
+  @CalledFromNative
+  internal val video_send_jitter_median: Any?
+
+  @CalledFromNative
+  internal val audio_recv_packet_loss_fraction: Any?
+
+  @CalledFromNative
+  internal val video_recv_packet_loss_fraction: Any?
+
+  @CalledFromNative
+  internal val audio_send_packet_loss_fraction: Any?
+
+  @CalledFromNative
+  internal val video_send_packet_loss_fraction: Any?
+
+  @CalledFromNative
+  internal val call_telemetry: Any?
+
+  @CalledFromNative
+  internal val call_id_hash: Any?
+  internal constructor(
+    user_satisfied: Boolean,
+    call_quality_issues: Any?,
+    additional_issues_description: Any?,
+    debug_log_url: Any?,
+    start_timestamp: Long,
+    end_timestamp: Long,
+    call_type: Any?,
+    success: Boolean,
+    call_end_reason: Any?,
+    connection_rtt_median: Any?,
+    audio_rtt_median: Any?,
+    video_rtt_median: Any?,
+    audio_recv_jitter_median: Any?,
+    video_recv_jitter_median: Any?,
+    audio_send_jitter_median: Any?,
+    video_send_jitter_median: Any?,
+    audio_recv_packet_loss_fraction: Any?,
+    video_recv_packet_loss_fraction: Any?,
+    audio_send_packet_loss_fraction: Any?,
+    video_send_packet_loss_fraction: Any?,
+    call_telemetry: Any?,
+    call_id_hash: Any?,
+  ) {
+    this.user_satisfied = user_satisfied
+    this.call_quality_issues = call_quality_issues
+    this.additional_issues_description = additional_issues_description
+    this.debug_log_url = debug_log_url
+    this.start_timestamp = start_timestamp
+    this.end_timestamp = end_timestamp
+    this.call_type = call_type
+    this.success = success
+    this.call_end_reason = call_end_reason
+    this.connection_rtt_median = connection_rtt_median
+    this.audio_rtt_median = audio_rtt_median
+    this.video_rtt_median = video_rtt_median
+    this.audio_recv_jitter_median = audio_recv_jitter_median
+    this.video_recv_jitter_median = video_recv_jitter_median
+    this.audio_send_jitter_median = audio_send_jitter_median
+    this.video_send_jitter_median = video_send_jitter_median
+    this.audio_recv_packet_loss_fraction = audio_recv_packet_loss_fraction
+    this.video_recv_packet_loss_fraction = video_recv_packet_loss_fraction
+    this.audio_send_packet_loss_fraction = audio_send_packet_loss_fraction
+    this.video_send_packet_loss_fraction = video_send_packet_loss_fraction
+    this.call_telemetry = call_telemetry
+    this.call_id_hash = call_id_hash
   }
 }
 
-public data class DeleteBackupMediaNextChunk(
-  val chunk: List<org.signal.libsignal.internal.BridgeDeleteBackupMediaItem>,
-  val termination: Any?,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      chunk: Any?,
-      termination: Any?,
-    ): DeleteBackupMediaNextChunk =
-      DeleteBackupMediaNextChunk(
-        chunk =
-          mapBridgeVecReturn<Object, org.signal.libsignal.internal.BridgeDeleteBackupMediaItem>({
-            downcastFromObject<org.signal.libsignal.internal.BridgeDeleteBackupMediaItem>(it)
-          })(chunk as Array<*>),
-        termination =
-          identity(termination as Object?),
-      )
-  }
-}
+public fun org.signal.libsignal.net.CallQualitySurvey.toFfiArgType(): CallQualitySurveyInternal_FfiArgType =
+  CallQualitySurveyInternal_FfiArgType(
+    user_satisfied = identity(userSatisfied),
+    call_quality_issues =
+      mapBridgeVecArg<String, String>({
+        identity(it)
+      })(callQualityIssues),
+    additional_issues_description = identity(additionalIssuesDescription),
+    debug_log_url = identity(debugLogUrl),
+    start_timestamp = (java.time.Instant::toEpochMilli)(startTimestamp),
+    end_timestamp = (java.time.Instant::toEpochMilli)(endTimestamp),
+    call_type = identity(callType),
+    success = identity(success),
+    call_end_reason = identity(callEndReason),
+    connection_rtt_median = identity(connectionRttMedian),
+    audio_rtt_median = identity(audioRttMedian),
+    video_rtt_median = identity(videoRttMedian),
+    audio_recv_jitter_median = identity(audioRecvJitterMedian),
+    video_recv_jitter_median = identity(videoRecvJitterMedian),
+    audio_send_jitter_median = identity(audioSendJitterMedian),
+    video_send_jitter_median = identity(videoSendJitterMedian),
+    audio_recv_packet_loss_fraction = identity(audioRecvPacketLossFraction),
+    video_recv_packet_loss_fraction = identity(videoRecvPacketLossFraction),
+    audio_send_packet_loss_fraction = identity(audioSendPacketLossFraction),
+    video_send_packet_loss_fraction = identity(videoSendPacketLossFraction),
+    call_telemetry = identity(callTelemetry),
+    call_id_hash = identity(callIdHash),
+  )
 
-public data class LinkedDeviceInternal(
-  val id: org.signal.libsignal.protocol.DeviceId,
-  val encryptedName: ByteArray,
-  val lastSeen: java.time.Instant,
-  val registrationId: Int,
-  val createdAtCiphertext: ByteArray,
-) {
-  public companion object {
-    @JvmStatic
-    @JvmName("fromNative")
-    @CalledFromNative
-    internal fun fromNative(
-      id: Any?,
-      encrypted_name: Any?,
-      last_seen: Any?,
-      registration_id: Any?,
-      created_at_ciphertext: Any?,
-    ): LinkedDeviceInternal =
-      LinkedDeviceInternal(
-        id =
-          identity(id as org.signal.libsignal.protocol.DeviceId),
-        encryptedName =
-          identity(encrypted_name as ByteArray),
-        lastSeen =
-          (java.time.Instant::ofEpochMilli)(last_seen as Long),
-        registrationId =
-          identity(registration_id as Int),
-        createdAtCiphertext =
-          identity(created_at_ciphertext as ByteArray),
-      )
-  }
-}
+public fun org.signal.libsignal.net.CallQualitySurvey.toFfiArgTypeObject(): Object =
+  convertToObject(this.toFfiArgType())
 
 public object NativeNice {
   public fun AuthenticatedChatConnection_clear_push_token(
@@ -361,6 +582,33 @@ public object NativeNice {
         Native.AuthenticatedChatConnection_clear_registration_lock(
           asyncCtxHandle.nativeHandle(),
           ffi_chat,
+        )
+      }
+    return ffiOut
+      .makeCancelable(asyncCtx)
+  }
+
+  public fun AuthenticatedChatConnection_confirm_username(
+    asyncCtx: TokioAsyncContext,
+    chat: org.signal.libsignal.net.AuthenticatedChatConnection,
+    username: String,
+    usernameCiphertext: ByteArray,
+    rng: org.signal.libsignal.net.DeterministicRandomSeedUseOnlyForTesting?,
+  ): CompletableFuture<java.util.UUID> {
+    val ffi_chat = identity(chat)
+    val ffi_username = identity(username)
+    val ffi_username_ciphertext = identity(usernameCiphertext)
+    val ffi_rng =
+      org.signal.libsignal.net.DeterministicRandomSeedUseOnlyForTesting
+        .toFfi(rng)
+    val ffiOut =
+      NativeHandleGuard(asyncCtx).use { asyncCtxHandle ->
+        Native.AuthenticatedChatConnection_confirm_username(
+          asyncCtxHandle.nativeHandle(),
+          ffi_chat,
+          ffi_username,
+          ffi_username_ciphertext,
+          ffi_rng,
         )
       }
     return ffiOut
@@ -402,7 +650,7 @@ public object NativeNice {
   public fun AuthenticatedChatConnection_get_devices(
     asyncCtx: TokioAsyncContext,
     chat: org.signal.libsignal.net.AuthenticatedChatConnection,
-  ): CompletableFuture<List<org.signal.libsignal.internal.LinkedDeviceInternal>> {
+  ): CompletableFuture<List<org.signal.libsignal.net.LinkedDevice>> {
     val ffi_chat = identity(chat)
     val ffiOut =
       NativeHandleGuard(asyncCtx).use { asyncCtxHandle ->
@@ -414,10 +662,30 @@ public object NativeNice {
     return ffiOut
       .makeCancelable(asyncCtx)
       .thenApply {
-        mapBridgeVecReturn<Object, org.signal.libsignal.internal.LinkedDeviceInternal>({
-          downcastFromObject<org.signal.libsignal.internal.LinkedDeviceInternal>(it)
+        mapBridgeVecReturn<Object, org.signal.libsignal.net.LinkedDevice>({
+          downcastFromObject<org.signal.libsignal.net.LinkedDevice>(it)
         })(it)
       }
+  }
+
+  public fun AuthenticatedChatConnection_redeem_backup_receipt(
+    asyncCtx: TokioAsyncContext,
+    chat: org.signal.libsignal.net.AuthenticatedChatConnection,
+    presentation: org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation,
+  ): CompletableFuture<Void?> {
+    val ffi_chat = identity(chat)
+    val ffi_presentation =
+      (org.signal.libsignal.zkgroup.internal.ByteArray::getInternalContentsForJNI)(presentation)
+    val ffiOut =
+      NativeHandleGuard(asyncCtx).use { asyncCtxHandle ->
+        Native.AuthenticatedChatConnection_redeem_backup_receipt(
+          asyncCtxHandle.nativeHandle(),
+          ffi_chat,
+          ffi_presentation,
+        )
+      }
+    return ffiOut
+      .makeCancelable(asyncCtx)
   }
 
   public fun AuthenticatedChatConnection_remove_device(
@@ -576,15 +844,6 @@ public object NativeNice {
       }
     return ffiOut
       .makeCancelable(asyncCtx)
-  }
-
-  public fun CopyBackupMediaStream_forceEmitVecOfBridgeCopyBackupMediaItem(): List<org.signal.libsignal.internal.BridgeCopyBackupMediaItem> {
-    val ffiOut =
-      Native.CopyBackupMediaStream_forceEmitVecOfBridgeCopyBackupMediaItem()
-
-    return mapBridgeVecReturn<Object, org.signal.libsignal.internal.BridgeCopyBackupMediaItem>({
-      downcastFromObject<org.signal.libsignal.internal.BridgeCopyBackupMediaItem>(it)
-    })(ffiOut)
   }
 
   public fun CopyBackupMediaStream_next(
@@ -920,6 +1179,45 @@ public object NativeNice {
       .thenApply { mapPair<String, String, String, String>({ identity(it) }, { identity(it) })(it) }
   }
 
+  public fun UnauthenticatedChatConnection_backup_list_media(
+    asyncCtx: TokioAsyncContext,
+    chat: org.signal.libsignal.net.UnauthenticatedChatConnection,
+    credential: org.signal.libsignal.zkgroup.backups.BackupAuthCredential,
+    serverKeys: org.signal.libsignal.zkgroup.GenericServerPublicParams,
+    signingKey: org.signal.libsignal.protocol.ecc.ECPrivateKey,
+    cursor: String,
+    limit: Int,
+    rng: org.signal.libsignal.net.DeterministicRandomSeedUseOnlyForTesting?,
+  ): CompletableFuture<org.signal.libsignal.internal.ListMediaResponse> {
+    val ffi_chat = identity(chat)
+    val ffi_credential =
+      (org.signal.libsignal.zkgroup.backups.BackupAuthCredential::getInternalContentsForJNI)(credential)
+    val ffi_server_keys =
+      (org.signal.libsignal.zkgroup.GenericServerPublicParams::getInternalContentsForJNI)(serverKeys)
+    val ffi_signing_key = identity(signingKey)
+    val ffi_cursor = identity(cursor)
+    val ffi_limit = identity(limit)
+    val ffi_rng =
+      org.signal.libsignal.net.DeterministicRandomSeedUseOnlyForTesting
+        .toFfi(rng)
+    val ffiOut =
+      NativeHandleGuard(asyncCtx).use { asyncCtxHandle ->
+        Native.UnauthenticatedChatConnection_backup_list_media(
+          asyncCtxHandle.nativeHandle(),
+          ffi_chat,
+          ffi_credential,
+          ffi_server_keys,
+          ffi_signing_key,
+          ffi_cursor,
+          ffi_limit,
+          ffi_rng,
+        )
+      }
+    return ffiOut
+      .makeCancelable(asyncCtx)
+      .thenApply { downcastFromObject<org.signal.libsignal.internal.ListMediaResponse>(it) }
+  }
+
   public fun UnauthenticatedChatConnection_backup_refresh(
     asyncCtx: TokioAsyncContext,
     chat: org.signal.libsignal.net.UnauthenticatedChatConnection,
@@ -978,6 +1276,25 @@ public object NativeNice {
           ffi_server_keys,
           ffi_signing_key,
           ffi_rng,
+        )
+      }
+    return ffiOut
+      .makeCancelable(asyncCtx)
+  }
+
+  public fun UnauthenticatedChatConnection_submit_call_quality_survey(
+    asyncCtx: TokioAsyncContext,
+    chat: org.signal.libsignal.net.UnauthenticatedChatConnection,
+    survey: org.signal.libsignal.net.CallQualitySurvey,
+  ): CompletableFuture<Void?> {
+    val ffi_chat = identity(chat)
+    val ffi_survey = (org.signal.libsignal.net.CallQualitySurvey::toFfiArgTypeObject)(survey)
+    val ffiOut =
+      NativeHandleGuard(asyncCtx).use { asyncCtxHandle ->
+        Native.UnauthenticatedChatConnection_submit_call_quality_survey(
+          asyncCtxHandle.nativeHandle(),
+          ffi_chat,
+          ffi_survey,
         )
       }
     return ffiOut

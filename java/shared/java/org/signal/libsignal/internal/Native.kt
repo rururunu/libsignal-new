@@ -282,6 +282,15 @@ internal object Native {
   ): CompletableFuture<Void?>
 
   @JvmStatic
+  public external fun AuthenticatedChatConnection_confirm_username(
+    asyncRuntime: ObjectHandle,
+    chat: SimpleOwner,
+    username: String,
+    usernameCiphertext: ByteArray,
+    rng: Long,
+  ): CompletableFuture<UUID>
+
+  @JvmStatic
   public external fun AuthenticatedChatConnection_connect(
     asyncRuntime: ObjectHandle,
     connectionManager: ObjectHandle,
@@ -332,6 +341,13 @@ internal object Native {
   public external fun AuthenticatedChatConnection_preconnect(
     asyncRuntime: ObjectHandle,
     connectionManager: ObjectHandle,
+  ): CompletableFuture<Void?>
+
+  @JvmStatic
+  public external fun AuthenticatedChatConnection_redeem_backup_receipt(
+    asyncRuntime: ObjectHandle,
+    chat: SimpleOwner,
+    presentation: ByteArray,
   ): CompletableFuture<Void?>
 
   @JvmStatic
@@ -857,9 +873,6 @@ internal object Native {
 
   @JvmStatic
   public external fun CopyBackupMediaStream_cancel(stream: SimpleOwner): Unit
-
-  @JvmStatic
-  public external fun CopyBackupMediaStream_forceEmitVecOfBridgeCopyBackupMediaItem(): Array<*>
 
   @JvmStatic
   public external fun CopyBackupMediaStream_next(
@@ -2649,6 +2662,16 @@ internal object Native {
 
   @JvmStatic
   @Throws(Exception::class)
+  public external fun ServerPublicParams_ReceiveAuthCredentialZkcWithoutPni(
+    params: ObjectHandle,
+    aci: ByteArray,
+    salt: ByteArray,
+    redemptionTime: Long,
+    authCredentialWithPniResponseBytes: ByteArray,
+  ): ByteArray
+
+  @JvmStatic
+  @Throws(Exception::class)
   public external fun ServerPublicParams_ReceiveExpiringProfileKeyCredential(
     serverPublicParams: ObjectHandle,
     requestContext: ByteArray,
@@ -2694,6 +2717,15 @@ internal object Native {
     randomness: ByteArray,
     aci: ByteArray,
     pni: ByteArray,
+    redemptionTime: Long,
+  ): ByteArray
+
+  @JvmStatic
+  public external fun ServerSecretParams_IssueAuthCredentialZkcWithoutPniDeterministic(
+    serverSecretParams: ObjectHandle,
+    randomness: ByteArray,
+    aci: ByteArray,
+    salt: ByteArray,
     redemptionTime: Long,
   ): ByteArray
 
@@ -2856,7 +2888,6 @@ internal object Native {
   @Throws(Exception::class)
   public external fun SessionRecord_HasUsableSenderChain(
     s: ObjectHandle,
-    requirePqRatio: Double,
     now: Long,
   ): Boolean
 
@@ -3117,6 +3148,18 @@ internal object Native {
   ): CompletableFuture<Object>
 
   @JvmStatic
+  public external fun UnauthenticatedChatConnection_backup_list_media(
+    asyncRuntime: ObjectHandle,
+    chat: SimpleOwner,
+    credential: ByteArray,
+    serverKeys: ByteArray,
+    signingKey: SimpleOwner,
+    cursor: String,
+    limit: Int,
+    rng: Long,
+  ): CompletableFuture<Object>
+
+  @JvmStatic
   public external fun UnauthenticatedChatConnection_backup_refresh(
     asyncRuntime: ObjectHandle,
     chat: SimpleOwner,
@@ -3241,6 +3284,13 @@ internal object Native {
     method: String,
     payload: ByteArray,
   ): CompletableFuture<ByteArray>
+
+  @JvmStatic
+  public external fun UnauthenticatedChatConnection_submit_call_quality_survey(
+    asyncRuntime: ObjectHandle,
+    chat: SimpleOwner,
+    survey: Object,
+  ): CompletableFuture<Void?>
 
   @JvmStatic
   @Throws(Exception::class)
