@@ -99,6 +99,19 @@ impl std::fmt::Display for IllegalArgumentError {
     }
 }
 
+/// Either a request error or an argument-validation failure.
+///
+/// For bridge functions that validate their arguments before making a request, so that a
+/// programmer error surfaces as an invalid-argument error in each app language rather than being
+/// dressed up as something the server said.
+#[derive(Debug, derive_more::From, displaydoc::Display)]
+pub enum RequestOrArgumentError<E> {
+    /// {0}
+    Request(libsignal_net_chat::api::RequestError<E>),
+    /// {0}
+    Argument(IllegalArgumentError),
+}
+
 /// With `bridge_handle_fns`, exposes a Rust type to each of the bridges as a boxed value.
 ///
 /// Full form:
@@ -412,6 +425,21 @@ where
 {
     fn from(value: Vec<U>) -> Self {
         Self(value.into_iter().map(Into::into).collect())
+    }
+}
+
+impl<T> FromIterator<T> for BridgeVec<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self(Vec::from_iter(iter))
+    }
+}
+
+impl<T> IntoIterator for BridgeVec<T> {
+    type Item = T;
+    type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }
 

@@ -11,6 +11,7 @@ use std::num::ParseIntError;
 use std::ops::{Deref, DerefMut, RangeInclusive};
 use std::slice;
 
+use itertools::Itertools as _;
 use libsignal_account_keys::{AccountEntropyPool, InvalidAccountEntropyPool};
 use libsignal_net_chat::api::UploadForm;
 use libsignal_net_chat::api::keys::DeviceSpecifier;
@@ -27,6 +28,7 @@ use crate::message_backup::MessageBackupValidationOutcome;
 use crate::net::chat::{
     ChatListener, NodeChatListener, NodeProvisioningListener, PreKeysResponse, ProvisioningListener,
 };
+use crate::protocol::StrictPreKeyId;
 use crate::protocol::storage::{
     NodeBridgeIdentityKeyStore, NodeBridgeKyberPreKeyStore, NodeBridgePreKeyStore,
     NodeBridgeSenderKeyStore, NodeBridgeSessionStore, NodeBridgeSignedPreKeyStore,
@@ -782,6 +784,28 @@ impl NiceArgConverter for DeviceId {
     }
 }
 
+impl<T> SimpleArgTypeInfo for StrictPreKeyId<T>
+where
+    T: From<u32> + 'static,
+{
+    type ArgType = JsNumber;
+
+    fn convert_from(cx: &mut FunctionContext, foreign: Handle<Self::ArgType>) -> NeonResult<Self> {
+        StrictPreKeyId::try_from(u32::convert_from(cx, foreign)?)
+            .or_else(|e| cx.throw_range_error(e.to_string()))
+    }
+    register_ts_ffi_type!("number");
+}
+#[cfg(feature = "metadata")]
+impl<T> NiceArgConverter for StrictPreKeyId<T>
+where
+    T: From<u32> + 'static,
+{
+    fn register_ts_arg_converter(ctx: &mut TsMetadataContext) -> TsArgConverter {
+        u32::register_ts_arg_converter(ctx)
+    }
+}
+
 impl SimpleArgTypeInfo for libsignal_net_chat::api::messages::MultiRecipientSendAuthorization {
     type ArgType = JsValue;
     fn convert_from(cx: &mut FunctionContext, foreign: Handle<Self::ArgType>) -> NeonResult<Self> {
@@ -830,6 +854,27 @@ macro_rules! zkgroup_serialize_type {
                 }
             }
         }
+
+        impl<'a> ResultTypeInfo<'a> for $ty {
+            type ResultType = <Vec<u8> as ResultTypeInfo<'a>>::ResultType;
+            fn convert_into(self, cx: &mut Cx<'a>) -> JsResult<'a, Self::ResultType> {
+                zkgroup::serialize(&self).convert_into(cx)
+            }
+            #[cfg(feature = "metadata")]
+            fn register_ts_ffi_type(ctx: &mut TsMetadataContext) -> String {
+                <Vec<u8> as ResultTypeInfo<'a>>::register_ts_ffi_type(ctx)
+            }
+        }
+        #[cfg(feature = "metadata")]
+        impl NiceResultConverter for $ty {
+            fn register_ts_result_converter(_ctx: &mut TsMetadataContext) -> TsReturnConverter {
+                TsReturnConverter {
+                    nice_type: format!("zkgroup.{}", $cls),
+                    ffi_type: "Uint8Array<ArrayBuffer>".to_string(),
+                    converter_function: format!("((x) => new zkgroup.{}(x))", $cls),
+                }
+            }
+        }
     };
     ($ty:ty, $cls:expr) => {
         zkgroup_serialize_type!($ty, zkgroup::deserialize, $cls);
@@ -844,6 +889,15 @@ zkgroup_serialize_type!(
     zkgroup::generic_server_params::GenericServerPublicParams,
     TryFrom::try_from,
     "GenericServerPublicParams"
+);
+zkgroup_serialize_type!(zkgroup::receipts::ReceiptCredential, "ReceiptCredential");
+zkgroup_serialize_type!(
+    zkgroup::receipts::ReceiptCredentialRequestContext,
+    "ReceiptCredentialRequestContext"
+);
+zkgroup_serialize_type!(
+    zkgroup::receipts::ReceiptCredentialPresentation,
+    "ReceiptCredentialPresentation"
 );
 
 // Used for callback results.
@@ -884,6 +938,38 @@ impl SimpleArgTypeInfo for Box<[u32]> {
         Ok(foreign.as_slice(cx).to_vec().into())
     }
     register_ts_ffi_type!("Uint32Array<ArrayBuffer>");
+}
+
+impl<T> SimpleArgTypeInfo for Vec<StrictPreKeyId<T>>
+where
+    T: From<u32> + 'static,
+{
+    type ArgType = JsUint32Array;
+
+    fn convert_from(cx: &mut FunctionContext, foreign: Handle<Self::ArgType>) -> NeonResult<Self> {
+        let slice = foreign.as_slice(cx);
+        slice
+            .iter()
+            .copied()
+            .map(StrictPreKeyId::try_from)
+            .try_collect()
+            .or_else(|e| cx.throw_range_error(e.to_string()))
+    }
+    register_ts_ffi_type!("Uint32Array<ArrayBuffer>");
+}
+#[cfg(feature = "metadata")]
+impl<T> NiceArgConverter for Vec<StrictPreKeyId<T>>
+where
+    T: From<u32> + 'static,
+{
+    fn register_ts_arg_converter(ctx: &mut TsMetadataContext) -> TsArgConverter {
+        let ty = <Self as ArgTypeInfo>::register_ts_ffi_type(ctx);
+        TsArgConverter {
+            nice_type: ty.clone(),
+            ffi_type: ty.clone(),
+            converter_function: "identity".into(),
+        }
+    }
 }
 
 impl SimpleArgTypeInfo for Box<[String]> {
@@ -1907,8 +1993,13 @@ impl<A: NiceResultConverter, B: NiceResultConverter> NiceResultConverter for (A,
             nice_type: format!("[{}, {}]", a.nice_type, b.nice_type),
             ffi_type: format!("[{}, {}]", a.ffi_type, b.ffi_type),
             converter_function: format!(
-                "([a, b]) => [({})(a), ({})(b)]",
-                a.converter_function, b.converter_function
+                "([a, b]: [{}, {}]): [{}, {}] => [({})(a), ({})(b)]",
+                a.ffi_type,
+                b.ffi_type,
+                a.nice_type,
+                b.nice_type,
+                a.converter_function,
+                b.converter_function
             ),
         }
     }
@@ -2330,6 +2421,19 @@ where
     #[cfg(feature = "metadata")]
     fn register_ts_ffi_type(ctx: &mut TsMetadataContext) -> String {
         P::register_ts_ffi_type(ctx)
+    }
+}
+
+// Note that we do *not* have a blanket NiceArgConverter impl for AsType;
+// the nice form of each type is going to be different.
+#[cfg(feature = "metadata")]
+impl NiceArgConverter for AsType<ServiceIdKind, u8> {
+    fn register_ts_arg_converter(_ctx: &mut TsMetadataContext) -> TsArgConverter {
+        TsArgConverter {
+            nice_type: "ServiceIdKind".to_owned(),
+            ffi_type: "number".to_owned(),
+            converter_function: "Number".to_owned(),
+        }
     }
 }
 

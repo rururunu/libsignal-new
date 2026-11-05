@@ -146,10 +146,16 @@ public object NativeTesting {
   public external fun TESTING_ChatSendErrorConvert(errorDescription: String): Unit
 
   @JvmStatic
+  public external fun TESTING_CheckSvrCredentialsTests(): Array<Object>
+
+  @JvmStatic
   public external fun TESTING_ClearPushTokenTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_ClearRegistrationLockTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_ConfirmTotpKeyTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_ConfirmUsernameTests(): Array<Object>
@@ -164,6 +170,9 @@ public object NativeTesting {
   public external fun TESTING_CopyBackupMediaTests(): Array<Object>
 
   @JvmStatic
+  public external fun TESTING_CreateLoginReceiptCredentialTests(): Array<Object>
+
+  @JvmStatic
   public external fun TESTING_CreateOTP(
     username: String,
     secret: ByteArray,
@@ -174,6 +183,9 @@ public object NativeTesting {
     username: String,
     secret: String,
   ): String
+
+  @JvmStatic
+  public external fun TESTING_DeleteAccountTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_DeleteBackupMediaTests(): Array<Object>
@@ -320,6 +332,12 @@ public object NativeTesting {
   ): CompletableFuture<ObjectHandle>
 
   @JvmStatic
+  public external fun TESTING_FinishMfaVerificationTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_FinishWebAuthnRegistrationTests(): Array<Object>
+
+  @JvmStatic
   public external fun TESTING_FutureCancellationCounter_Create(initialValue: Int): ObjectHandle
 
   @JvmStatic
@@ -366,10 +384,16 @@ public object NativeTesting {
   public external fun TESTING_FutureThrowsPoisonErrorType(asyncRuntime: ObjectHandle): CompletableFuture<Void?>
 
   @JvmStatic
+  public external fun TESTING_GenerateTotpKeyTests(): Array<Object>
+
+  @JvmStatic
   public external fun TESTING_GetBackupCdnCredentialsTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_GetBackupSvrBCredentialsTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_GetCurrencyConversionsTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_GetDevicesTests(): Array<Object>
@@ -379,6 +403,12 @@ public object NativeTesting {
 
   @JvmStatic
   public external fun TESTING_GetMessageBackupInfoTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_GetPreKeyCountTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_GetStickerUploadFormTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_InputStreamReadIntoZeroLengthSlice(capsAlphabetInput: InputStream): ByteArray
@@ -403,6 +433,9 @@ public object NativeTesting {
 
   @JvmStatic
   public external fun TESTING_KeyTransStoredAccountData(): ByteArray
+
+  @JvmStatic
+  public external fun TESTING_ListMfaKeysTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_LookUpUsernameLinkTests(): Array<Object>
@@ -529,6 +562,9 @@ public object NativeTesting {
   public external fun TESTING_RegisterAccountResponse_CreateTestValue(): ObjectHandle
 
   @JvmStatic
+  public external fun TESTING_RegisterAccountResponse_CreateTestValueWithoutPhoneNumber(): ObjectHandle
+
+  @JvmStatic
   @Throws(Exception::class)
   public external fun TESTING_RegistrationService_CheckSvr2CredentialsErrorConvert(errorDescription: String): Unit
 
@@ -566,6 +602,9 @@ public object NativeTesting {
   public external fun TESTING_RemoveDeviceTests(): Array<Object>
 
   @JvmStatic
+  public external fun TESTING_RemoveMfaKeyTests(): Array<Object>
+
+  @JvmStatic
   public external fun TESTING_ReserveUsernameHashTests(): Array<Object>
 
   @JvmStatic
@@ -596,10 +635,25 @@ public object NativeTesting {
   public external fun TESTING_RoundTripU8(input: Int): Int
 
   @JvmStatic
+  public external fun TESTING_SetCapabilitiesTests(): Array<Object>
+
+  @JvmStatic
   public external fun TESTING_SetDeviceNameTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_SetDiscoverableByPhoneNumberTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_SetLastResortKemPreKeyTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_SetMfaKeyMetadataTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_SetOneTimeEcPreKeysTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_SetOneTimeKemPreKeysTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_SetPushTokenFcmTests(): Array<Object>
@@ -611,6 +665,9 @@ public object NativeTesting {
   public external fun TESTING_SetRegistrationRecoveryPasswordTests(): Array<Object>
 
   @JvmStatic
+  public external fun TESTING_SetSignedEcPreKeyTests(): Array<Object>
+
+  @JvmStatic
   public external fun TESTING_SetUsernameLinkTests(): Array<Object>
 
   @JvmStatic
@@ -618,6 +675,12 @@ public object NativeTesting {
     sourcePublicKey: ObjectHandle,
     signedPreKey: SignedPublicPreKey<*>,
   ): Unit
+
+  @JvmStatic
+  public external fun TESTING_StartMfaVerificationTests(): Array<Object>
+
+  @JvmStatic
+  public external fun TESTING_StartWebAuthnRegistrationTests(): Array<Object>
 
   @JvmStatic
   public external fun TESTING_SubmitCallQualitySurveyTests(): Array<Object>

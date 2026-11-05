@@ -153,6 +153,32 @@ export const enum LogLevel {
   Trace,
 }
 
+export type ReturnFfiAuthCheckResult =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    };
+
+export type ReturnFfiBridgeConfirmedMfaKey = {
+  id: number;
+  metadata: ReturnFfiBridgeConfirmedMfaKeyMetadata;
+  kind: ReturnFfiBridgeMfaKeyKind;
+};
+
+export type ReturnFfiBridgeConfirmedMfaKeyMetadata =
+  | {
+      __type: 0;
+      _0: ReturnFfiBridgeMfaMetadata;
+    }
+  | {
+      __type: 1;
+    };
+
 export type ReturnFfiBridgeCopyBackupMediaItem = {
   source_attachment_cdn: number;
   source_key: string;
@@ -198,6 +224,62 @@ export type ReturnFfiBridgeMessageBackupInfo = {
   backup_name: string;
 };
 
+export type ReturnFfiBridgeMfaKeyKind =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    };
+
+export type ReturnFfiBridgeMfaMetadata = {
+  name: string;
+  created_at: Timestamp;
+};
+
+export type ReturnFfiBridgeMfaVerificationCredential =
+  | {
+      __type: 0;
+      password: number;
+    }
+  | {
+      __type: 1;
+      json: string;
+    };
+
+export type ReturnFfiBridgePendingTotpKey = {
+  key: Uint8Array<ArrayBuffer>;
+  parameters: ReturnFfiBridgeTotpParameters;
+};
+
+export type ReturnFfiBridgePreKeyCounts = {
+  aci_ec_pre_key_count: number;
+  aci_kem_pre_key_count: number;
+  pni_ec_pre_key_count: number;
+  pni_kem_pre_key_count: number;
+};
+
+export type ReturnFfiBridgeTotpParameters = {
+  algorithm: string;
+  password_length: number;
+  time_step_seconds: number;
+};
+
+export type ReturnFfiBridgeWebAuthnAuthenticationParameters = {
+  challenge: Uint8Array<ArrayBuffer>;
+  timeout_seconds: number;
+  allowed_credential_ids: Array<Uint8Array<ArrayBuffer>>;
+};
+
+export type ReturnFfiBridgeWebAuthnCreateParameters = {
+  user_handle: Uint8Array<ArrayBuffer>;
+  allowed_algorithms: Array<number>;
+  exclude_credential_ids: Array<Uint8Array<ArrayBuffer>>;
+};
+
 export type ReturnFfiCallQualitySurveyInternal = {
   user_satisfied: boolean;
   call_quality_issues: Array<string>;
@@ -222,6 +304,39 @@ export type ReturnFfiCallQualitySurveyInternal = {
   call_telemetry: Uint8Array<ArrayBuffer> | null;
   call_id_hash: Uint8Array<ArrayBuffer> | null;
 };
+
+export type ReturnFfiChargeFailure = {
+  processor: ReturnFfiPaymentProvider;
+  code: string;
+  message: string;
+  outcome_network_status: string | null;
+  outcome_reason: string | null;
+  outcome_type: string | null;
+};
+
+export type ReturnFfiCheckSvrCredentialsArgs = {
+  number: string;
+  passwords: Array<string>;
+};
+
+export type ReturnFfiConfirmTotpKeyArgs = {
+  one_time_password: number;
+  name: string;
+  created_at: Timestamp;
+  svr_key: Uint8Array<ArrayBuffer>;
+};
+
+export type ReturnFfiConfirmTotpKeyOut =
+  | {
+      __type: 0;
+      _0: number;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    };
 
 export type ReturnFfiConfirmUsernameArgs = {
   username: string;
@@ -260,6 +375,38 @@ export type ReturnFfiCopyBackupMediaOut =
       __type: 3;
     };
 
+export type ReturnFfiCreateLoginReceiptCredentialArgs = {
+  payment_processor: ReturnFfiPaymentProvider;
+  purchase_identifier: string;
+  receipt_credential_request_context: Uint8Array<ArrayBuffer>;
+  server_params: ReturnFfiServerPublicParamsSerialized;
+  purchase_time: Timestamp;
+};
+
+export type ReturnFfiCreateLoginReceiptCredentialOut =
+  | {
+      __type: 0;
+      _0: Uint8Array<ArrayBuffer>;
+    }
+  | {
+      __type: 1;
+      contains: string;
+    }
+  | {
+      __type: 2;
+      _0: ReturnFfiReceiptCredentialError;
+    };
+
+export type ReturnFfiCurrencyConversionsInternal = {
+  timestamp_ms: Timestamp;
+  currencies: Array<ReturnFfiCurrencyInternal>;
+};
+
+export type ReturnFfiCurrencyInternal = {
+  base: string;
+  conversions: Array<[string, string]>;
+};
+
 export type ReturnFfiDeleteBackupMediaNextChunk = {
   chunk: Array<ReturnFfiBridgeDeleteBackupMediaItem>;
   termination: ('finished' | Error) | null;
@@ -278,6 +425,69 @@ export type ReturnFfiDeleteBackupMediaOut =
     }
   | {
       __type: 3;
+    };
+
+export type ReturnFfiDeviceCapabilityInternal =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    }
+  | {
+      __type: 3;
+    }
+  | {
+      __type: 4;
+    }
+  | {
+      __type: 5;
+    }
+  | {
+      __type: 6;
+    };
+
+export type ReturnFfiFinishMfaVerificationOut =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    };
+
+export type ReturnFfiFinishWebAuthnRegistrationArgs = {
+  attestation_object: Uint8Array<ArrayBuffer>;
+  collected_client_data_json: string;
+  name: string;
+  created_at: Timestamp;
+  svr_key: Uint8Array<ArrayBuffer>;
+};
+
+export type ReturnFfiFinishWebAuthnRegistrationOut =
+  | {
+      __type: 0;
+      _0: number;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    };
+
+export type ReturnFfiGenerateTotpKeyOut =
+  | {
+      __type: 0;
+      _0: ReturnFfiBridgePendingTotpKey;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
     };
 
 export type ReturnFfiGetCdnCredentialsOut =
@@ -319,6 +529,21 @@ export type ReturnFfiGetMessageBackupInfoOut =
   | {
       __type: 2;
     };
+
+export type ReturnFfiGetStickerUploadFormsOut =
+  | {
+      __type: 0;
+      _0: ReturnFfiGetStickerUploadFormsResponse;
+    }
+  | {
+      __type: 1;
+    };
+
+export type ReturnFfiGetStickerUploadFormsResponse = {
+  pack_id: string;
+  manifest_upload_form: ReturnFfiS3UploadFormInternal;
+  sticker_upload_forms: Array<ReturnFfiS3UploadFormInternal>;
+};
 
 export type ReturnFfiGetSvrBCredentialsOut =
   | {
@@ -372,6 +597,15 @@ export type ReturnFfiListMediaResponse = {
   backup_dir: string;
   media_dir: string;
   cursor: string | null;
+};
+
+export type ReturnFfiListMfaKeysArgs = {
+  svr_key: Uint8Array<ArrayBuffer>;
+};
+
+export type ReturnFfiListMfaKeysOut = {
+  __type: 0;
+  _0: Array<ReturnFfiBridgeConfirmedMfaKey>;
 };
 
 export type ReturnFfiLookUpUsernameLinkArgs = {
@@ -457,6 +691,35 @@ export type ReturnFfiMyTestStruct = {
   my_string_field: string;
 };
 
+export type ReturnFfiPaymentProvider =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    }
+  | {
+      __type: 3;
+    };
+
+export type ReturnFfiReceiptCredentialError =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+      charge_failure: Array<ReturnFfiChargeFailure>;
+    }
+  | {
+      __type: 2;
+    }
+  | {
+      __type: 3;
+    };
+
 export type ReturnFfiRedeemBackupReceiptOut =
   | {
       __type: 0;
@@ -479,6 +742,14 @@ export type ReturnFfiRemoveDeviceOut = {
   __type: 0;
 };
 
+export type ReturnFfiRemoveMfaKeyArgs = {
+  key_id: number;
+};
+
+export type ReturnFfiRemoveMfaKeyOut = {
+  __type: 0;
+};
+
 export type ReturnFfiReserveUsernameHashArgs = {
   usernames: Array<Uint8Array<ArrayBuffer>>;
 };
@@ -492,6 +763,24 @@ export type ReturnFfiReserveUsernameHashOut =
       __type: 1;
     };
 
+export type ReturnFfiS3UploadFormInternal = {
+  key: string;
+  credential: string;
+  acl: string;
+  algorithm: string;
+  date: string;
+  policy: string;
+  signature: string;
+};
+
+export type ReturnFfiServerPublicParamsSerialized = {
+  bytes: Uint8Array<ArrayBuffer>;
+};
+
+export type ReturnFfiSetCapabilitiesArgs = {
+  capabilities: Array<ReturnFfiDeviceCapabilityInternal>;
+};
+
 export type ReturnFfiSetDeviceNameArgs = {
   id: number;
   encrypted_name: Uint8Array<ArrayBuffer>;
@@ -504,6 +793,41 @@ export type ReturnFfiSetDeviceNameOut =
   | {
       __type: 1;
     };
+
+export type ReturnFfiSetLastResortKemPreKeyArgs = {
+  identity: number;
+  pre_key: ReturnFfiTestingAnySignedPreKey;
+};
+
+export type ReturnFfiSetMfaKeyMetadataArgs = {
+  key_id: number;
+  name: string;
+  created_at: Timestamp;
+  svr_key: Uint8Array<ArrayBuffer>;
+};
+
+export type ReturnFfiSetMfaKeyMetadataOut =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    };
+
+export type ReturnFfiSetOneTimeEcPreKeysArgs = {
+  identity: number;
+  pre_keys: Array<[number, Uint8Array<ArrayBuffer>]>;
+};
+
+export type ReturnFfiSetOneTimeKemPreKeysArgs = {
+  identity: number;
+  pre_keys: Array<ReturnFfiTestingAnySignedPreKey>;
+};
+
+export type ReturnFfiSetSignedEcPreKeyArgs = {
+  identity: number;
+  pre_key: ReturnFfiTestingAnySignedPreKey;
+};
 
 export type ReturnFfiSetUsernameLinkArgs = {
   username_ciphertext: Uint8Array<ArrayBuffer>;
@@ -530,9 +854,38 @@ export type ReturnFfiSimpleBackupTestOut =
       __type: 2;
     };
 
+export type ReturnFfiStartMfaVerificationOut =
+  | {
+      __type: 0;
+      _0: ReturnFfiStartMfaVerificationResponse;
+    }
+  | {
+      __type: 1;
+    };
+
+export type ReturnFfiStartMfaVerificationResponse = {
+  has_totp: boolean;
+  webauthn_params: ReturnFfiBridgeWebAuthnAuthenticationParameters | null;
+};
+
+export type ReturnFfiStartWebAuthnRegistrationOut =
+  | {
+      __type: 0;
+      _0: ReturnFfiBridgeWebAuthnCreateParameters;
+    }
+  | {
+      __type: 1;
+    };
+
 export type ReturnFfiTestStreamChunk = {
   chunk: Array<string>;
   termination: ('finished' | Error) | null;
+};
+
+export type ReturnFfiTestingAnySignedPreKey = {
+  id: number;
+  key: Uint8Array<ArrayBuffer>;
+  sig: Uint8Array<ArrayBuffer>;
 };
 
 export type ArgFfiBridgeCopyBackupMediaItem = {
@@ -547,6 +900,16 @@ export type ArgFfiBridgeDeleteBackupMediaItem = {
   media_id: Uint8Array<ArrayBuffer>;
   cdn: number;
 };
+
+export type ArgFfiBridgeMfaVerificationCredential =
+  | {
+      __type: 0;
+      password: number;
+    }
+  | {
+      __type: 1;
+      json: string;
+    };
 
 export type ArgFfiCallQualitySurveyInternal = {
   user_satisfied: boolean;
@@ -572,6 +935,29 @@ export type ArgFfiCallQualitySurveyInternal = {
   call_telemetry: Uint8Array<ArrayBuffer> | null;
   call_id_hash: Uint8Array<ArrayBuffer> | null;
 };
+
+export type ArgFfiDeviceCapabilityInternal =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    }
+  | {
+      __type: 3;
+    }
+  | {
+      __type: 4;
+    }
+  | {
+      __type: 5;
+    }
+  | {
+      __type: 6;
+    };
 
 export type ArgFfiMyRemoteDeriveEnum =
   | {
@@ -636,6 +1022,20 @@ export type ArgFfiMyTestStruct = {
   my_string_field: string;
 };
 
+export type ArgFfiPaymentProvider =
+  | {
+      __type: 0;
+    }
+  | {
+      __type: 1;
+    }
+  | {
+      __type: 2;
+    }
+  | {
+      __type: 3;
+    };
+
 export const NetRemoteConfigKeys = [
   'chatRequestConnectionCheckTimeoutMillis',
   'grpc.AccountsAnonymousLookupUsernameHash',
@@ -646,6 +1046,7 @@ export const NetRemoteConfigKeys = [
   'grpc.AttachmentsGetUploadForm',
   'grpc.MessagesSendMessage',
   'grpc.BackupsAnonymousGetUploadForm',
+  'grpc.KeyTransparencyQueryServiceSearchV2',
 ] as const;
 
 import load from 'node-gyp-build';
@@ -709,6 +1110,15 @@ type NativeFunctions = {
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>
   ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_confirm_totp_key: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    one_time_password: number,
+    name: string,
+    created_at: Timestamp,
+    svr_key: Uint8Array<ArrayBuffer>,
+    rng: RandomNumberGenerator
+  ) => CancellablePromise<number>;
   AuthenticatedChatConnection_confirm_username: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>,
@@ -724,6 +1134,10 @@ type NativeFunctions = {
     receive_stories: boolean,
     languages: Array<string>
   ) => CancellablePromise<AuthenticatedChatConnection>;
+  AuthenticatedChatConnection_delete_account: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>
+  ) => CancellablePromise<void>;
   AuthenticatedChatConnection_delete_username_hash: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>
@@ -736,10 +1150,42 @@ type NativeFunctions = {
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>
   ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_finish_mfa_verification: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    credential: ArgFfiBridgeMfaVerificationCredential
+  ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_finish_web_authn_registration: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    attestation_object: Uint8Array<ArrayBuffer>,
+    collected_client_data_json: string,
+    name: string,
+    created_at: Timestamp,
+    svr_key: Uint8Array<ArrayBuffer>,
+    rng: RandomNumberGenerator
+  ) => CancellablePromise<number>;
+  AuthenticatedChatConnection_generate_totp_key: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>
+  ) => CancellablePromise<ReturnFfiBridgePendingTotpKey>;
+  AuthenticatedChatConnection_get_currency_conversions: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>
+  ) => CancellablePromise<ReturnFfiCurrencyConversionsInternal>;
   AuthenticatedChatConnection_get_devices: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>
   ) => CancellablePromise<Array<ReturnFfiLinkedDeviceInternal>>;
+  AuthenticatedChatConnection_get_pre_key_count: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>
+  ) => CancellablePromise<ReturnFfiBridgePreKeyCounts>;
+  AuthenticatedChatConnection_get_sticker_upload_forms: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    number_of_stickers: number
+  ) => CancellablePromise<ReturnFfiGetStickerUploadFormsResponse>;
   AuthenticatedChatConnection_get_upload_form: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>,
@@ -752,6 +1198,11 @@ type NativeFunctions = {
     chat: Wrapper<AuthenticatedChatConnection>,
     listener: ChatListener
   ) => void;
+  AuthenticatedChatConnection_list_mfa_keys: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    svr_key: Uint8Array<ArrayBuffer>
+  ) => CancellablePromise<Array<ReturnFfiBridgeConfirmedMfaKey>>;
   AuthenticatedChatConnection_preconnect: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     connection_manager: Wrapper<ConnectionManager>
@@ -765,6 +1216,11 @@ type NativeFunctions = {
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>,
     device_id: number
+  ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_remove_mfa_key: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    key_id: number
   ) => CancellablePromise<void>;
   AuthenticatedChatConnection_reserve_username_hash: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
@@ -788,13 +1244,6 @@ type NativeFunctions = {
     online_only: boolean,
     is_urgent: boolean
   ) => CancellablePromise<void>;
-  AuthenticatedChatConnection_send_raw_grpc: (
-    asyncRuntime: Wrapper<TokioAsyncContext>,
-    chat: Wrapper<AuthenticatedChatConnection>,
-    service: string,
-    method: string,
-    payload: Uint8Array<ArrayBuffer>
-  ) => CancellablePromise<Uint8Array<ArrayBuffer>>;
   AuthenticatedChatConnection_send_sync_message: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>,
@@ -803,6 +1252,11 @@ type NativeFunctions = {
     registration_ids: Uint32Array<ArrayBuffer>,
     contents: Array<Wrapper<CiphertextMessage>>,
     is_urgent: boolean
+  ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_set_capabilities: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    capabilities: Array<ArgFfiDeviceCapabilityInternal>
   ) => CancellablePromise<void>;
   AuthenticatedChatConnection_set_device_name: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
@@ -815,6 +1269,38 @@ type NativeFunctions = {
     chat: Wrapper<AuthenticatedChatConnection>,
     discoverable: boolean
   ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_set_last_resort_kem_pre_key: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    identity_type: number,
+    id: number,
+    key: Wrapper<KyberPublicKey>,
+    signature: Uint8Array<ArrayBuffer>
+  ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_set_mfa_key_metadata: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    key_id: number,
+    name: string,
+    created_at: Timestamp,
+    svr_key: Uint8Array<ArrayBuffer>,
+    rng: RandomNumberGenerator
+  ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_set_one_time_ec_pre_keys: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    identity_type: number,
+    pre_key_ids: Uint32Array<ArrayBuffer>,
+    pre_key_data: Array<Wrapper<PublicKey>>
+  ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_set_one_time_kem_pre_keys: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    identity_type: number,
+    pre_key_ids: Uint32Array<ArrayBuffer>,
+    pre_key_data: Array<Wrapper<KyberPublicKey>>,
+    pre_key_signatures: Array<Uint8Array<ArrayBuffer>>
+  ) => CancellablePromise<void>;
   AuthenticatedChatConnection_set_registration_lock: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>,
@@ -825,12 +1311,28 @@ type NativeFunctions = {
     chat: Wrapper<AuthenticatedChatConnection>,
     svr_key: Uint8Array<ArrayBuffer>
   ) => CancellablePromise<void>;
+  AuthenticatedChatConnection_set_signed_ec_pre_key: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>,
+    identity_type: number,
+    id: number,
+    key: Wrapper<PublicKey>,
+    signature: Uint8Array<ArrayBuffer>
+  ) => CancellablePromise<void>;
   AuthenticatedChatConnection_set_username_link: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<AuthenticatedChatConnection>,
     username_ciphertext: Uint8Array<ArrayBuffer>,
     keep_link_handle: boolean
   ) => CancellablePromise<Uuid>;
+  AuthenticatedChatConnection_start_mfa_verification: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>
+  ) => CancellablePromise<ReturnFfiStartMfaVerificationResponse>;
+  AuthenticatedChatConnection_start_web_authn_registration: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<AuthenticatedChatConnection>
+  ) => CancellablePromise<ReturnFfiBridgeWebAuthnCreateParameters>;
   AvatarUploadCredentialPresentation_CheckValidContents: (
     presentation_bytes: Uint8Array<ArrayBuffer>
   ) => void;
@@ -1631,6 +2133,14 @@ type NativeFunctions = {
   MessageBackupKey_GetHmacKey: (
     key: Wrapper<MessageBackupKey>
   ) => Uint8Array<ArrayBuffer>;
+  MessageBackupSizing_FlushInterval: (
+    uncompressed_len: bigint,
+    estimated_total_uncompressed_len: bigint
+  ) => bigint;
+  MessageBackupSizing_PaddingSize: (
+    max_interval_bytes: bigint,
+    compressed_len: bigint
+  ) => bigint;
   MessageBackupValidator_Validate: (
     key: Wrapper<MessageBackupKey>,
     first_stream: InputStream,
@@ -1896,9 +2406,19 @@ type NativeFunctions = {
     identity_type: number,
     signed_pre_key: SignedPublicPreKey
   ) => void;
+  RegisterAccountRequest_SetOneTimePassword: (
+    register_account: Wrapper<RegisterAccountRequest>,
+    one_time_password: number
+  ) => void;
   RegisterAccountRequest_SetSkipDeviceTransfer: (
     register_account: Wrapper<RegisterAccountRequest>
   ) => void;
+  RegisterAccountResponse_GetAci: (
+    response: Wrapper<RegisterAccountResponse>
+  ) => Uuid;
+  RegisterAccountResponse_GetAuthCredentialSalt: (
+    response: Wrapper<RegisterAccountResponse>
+  ) => Uint8Array<ArrayBuffer> | null;
   RegisterAccountResponse_GetEntitlementBackupExpirationSeconds: (
     response: Wrapper<RegisterAccountResponse>
   ) => bigint | null;
@@ -1908,13 +2428,12 @@ type NativeFunctions = {
   RegisterAccountResponse_GetEntitlementBadges: (
     response: Wrapper<RegisterAccountResponse>
   ) => Array<RegisterResponseBadge>;
-  RegisterAccountResponse_GetIdentity: (
-    response: Wrapper<RegisterAccountResponse>,
-    identity_type: number
-  ) => Uint8Array<ArrayBuffer>;
   RegisterAccountResponse_GetNumber: (
     response: Wrapper<RegisterAccountResponse>
-  ) => string;
+  ) => string | null;
+  RegisterAccountResponse_GetPni: (
+    response: Wrapper<RegisterAccountResponse>
+  ) => Uuid | null;
   RegisterAccountResponse_GetReregistration: (
     response: Wrapper<RegisterAccountResponse>
   ) => boolean;
@@ -1953,6 +2472,13 @@ type NativeFunctions = {
     register_account: Wrapper<RegisterAccountRequest>,
     account_attributes: Wrapper<RegistrationAccountAttributes>
   ) => CancellablePromise<RegisterAccountResponse>;
+  RegistrationService_RegisterAccountWithoutNumber: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    connect_chat: ConnectChatBridge,
+    receipt_credential_presentation: Uint8Array<ArrayBuffer>,
+    register_account: Wrapper<RegisterAccountRequest>,
+    account_attributes: Wrapper<RegistrationAccountAttributes>
+  ) => CancellablePromise<RegisterAccountResponse>;
   RegistrationService_RegistrationSession: (
     service: Wrapper<RegistrationService>
   ) => RegistrationSession;
@@ -1967,6 +2493,13 @@ type NativeFunctions = {
     asyncRuntime: Wrapper<TokioAsyncContext>,
     connect_chat: ConnectChatBridge,
     number: string,
+    register_account: Wrapper<RegisterAccountRequest>,
+    account_attributes: Wrapper<RegistrationAccountAttributes>
+  ) => CancellablePromise<RegisterAccountResponse>;
+  RegistrationService_ReregisterAccountWithoutNumber: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    connect_chat: ConnectChatBridge,
+    aci: Uint8Array<ArrayBuffer>,
     register_account: Wrapper<RegisterAccountRequest>,
     account_attributes: Wrapper<RegistrationAccountAttributes>
   ) => CancellablePromise<RegisterAccountResponse>;
@@ -2607,8 +3140,17 @@ type NativeFunctions = {
   TESTING_ChatRequestGetPath: (request: Wrapper<HttpRequest>) => string;
   TESTING_ChatResponseConvert: (body_present: boolean) => ChatResponse;
   TESTING_ChatSendErrorConvert: (error_description: string) => void;
+  TESTING_CheckSvrCredentialsTests: () => Array<
+    GrpcTestCaseFfi<
+      ReturnFfiCheckSvrCredentialsArgs,
+      Array<[string, ReturnFfiAuthCheckResult]>
+    >
+  >;
   TESTING_ClearPushTokenTests: () => Array<GrpcTestCaseFfi<void, void>>;
   TESTING_ClearRegistrationLockTests: () => Array<GrpcTestCaseFfi<void, void>>;
+  TESTING_ConfirmTotpKeyTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiConfirmTotpKeyArgs, ReturnFfiConfirmTotpKeyOut>
+  >;
   TESTING_ConfirmUsernameTests: () => Array<
     GrpcTestCaseFfi<ReturnFfiConfirmUsernameArgs, ReturnFfiConfirmUsernameOut>
   >;
@@ -2631,11 +3173,18 @@ type NativeFunctions = {
       Array<ReturnFfiCopyBackupMediaOut>
     >
   >;
+  TESTING_CreateLoginReceiptCredentialTests: () => Array<
+    GrpcTestCaseFfi<
+      ReturnFfiCreateLoginReceiptCredentialArgs,
+      ReturnFfiCreateLoginReceiptCredentialOut
+    >
+  >;
   TESTING_CreateOTP: (
     username: string,
     secret: Uint8Array<ArrayBuffer>
   ) => string;
   TESTING_CreateOTPFromBase64: (username: string, secret: string) => string;
+  TESTING_DeleteAccountTests: () => Array<GrpcTestCaseFfi<void, void>>;
   TESTING_DeleteBackupMediaTests: () => Array<
     GrpcTestCaseFfi<
       Array<ReturnFfiBridgeDeleteBackupMediaItem>,
@@ -2737,6 +3286,18 @@ type NativeFunctions = {
     create_session: RegistrationCreateSessionRequest,
     chat: Wrapper<FakeChatServer>
   ) => CancellablePromise<RegistrationService>;
+  TESTING_FinishMfaVerificationTests: () => Array<
+    GrpcTestCaseFfi<
+      ReturnFfiBridgeMfaVerificationCredential,
+      ReturnFfiFinishMfaVerificationOut
+    >
+  >;
+  TESTING_FinishWebAuthnRegistrationTests: () => Array<
+    GrpcTestCaseFfi<
+      ReturnFfiFinishWebAuthnRegistrationArgs,
+      ReturnFfiFinishWebAuthnRegistrationOut
+    >
+  >;
   TESTING_FutureCancellationCounter_Create: (
     initial_value: number
   ) => TestingFutureCancellationCounter;
@@ -2765,11 +3326,17 @@ type NativeFunctions = {
     asyncRuntime: Wrapper<NonSuspendingBackgroundThreadRuntime>,
     input: number
   ) => CancellablePromise<number>;
+  TESTING_GenerateTotpKeyTests: () => Array<
+    GrpcTestCaseFfi<void, ReturnFfiGenerateTotpKeyOut>
+  >;
   TESTING_GetBackupCdnCredentialsTests: () => Array<
     GrpcTestCaseFfi<number, ReturnFfiGetCdnCredentialsOut>
   >;
   TESTING_GetBackupSvrBCredentialsTests: () => Array<
     GrpcTestCaseFfi<void, ReturnFfiGetSvrBCredentialsOut>
+  >;
+  TESTING_GetCurrencyConversionsTests: () => Array<
+    GrpcTestCaseFfi<void, ReturnFfiCurrencyConversionsInternal>
   >;
   TESTING_GetDevicesTests: () => Array<
     GrpcTestCaseFfi<void, ReturnFfiGetDevicesOut>
@@ -2780,6 +3347,12 @@ type NativeFunctions = {
   TESTING_GetMessageBackupInfoTests: () => Array<
     GrpcTestCaseFfi<void, ReturnFfiGetMessageBackupInfoOut>
   >;
+  TESTING_GetPreKeyCountTests: () => Array<
+    GrpcTestCaseFfi<void, ReturnFfiBridgePreKeyCounts>
+  >;
+  TESTING_GetStickerUploadFormTests: () => Array<
+    GrpcTestCaseFfi<number, ReturnFfiGetStickerUploadFormsOut>
+  >;
   TESTING_InputStreamReadIntoZeroLengthSlice: (
     caps_alphabet_input: InputStream
   ) => Promise<Uint8Array<ArrayBuffer>>;
@@ -2788,6 +3361,9 @@ type NativeFunctions = {
   TESTING_KeyTransFatalVerificationFailure: () => void;
   TESTING_KeyTransNonFatalVerificationFailure: () => void;
   TESTING_KeyTransStoredAccountData: () => Uint8Array<ArrayBuffer>;
+  TESTING_ListMfaKeysTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiListMfaKeysArgs, ReturnFfiListMfaKeysOut>
+  >;
   TESTING_LookUpUsernameLinkTests: () => Array<
     GrpcTestCaseFfi<
       ReturnFfiLookUpUsernameLinkArgs,
@@ -2877,6 +3453,7 @@ type NativeFunctions = {
     GrpcTestCaseFfi<Uint8Array<ArrayBuffer>, ReturnFfiRedeemBackupReceiptOut>
   >;
   TESTING_RegisterAccountResponse_CreateTestValue: () => RegisterAccountResponse;
+  TESTING_RegisterAccountResponse_CreateTestValueWithoutPhoneNumber: () => RegisterAccountResponse;
   TESTING_RegistrationService_CheckSvr2CredentialsErrorConvert: (
     error_description: string
   ) => void;
@@ -2903,6 +3480,9 @@ type NativeFunctions = {
   TESTING_RemoveDeviceTests: () => Array<
     GrpcTestCaseFfi<ReturnFfiRemoveDeviceArgs, ReturnFfiRemoveDeviceOut>
   >;
+  TESTING_RemoveMfaKeyTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiRemoveMfaKeyArgs, ReturnFfiRemoveMfaKeyOut>
+  >;
   TESTING_ReserveUsernameHashTests: () => Array<
     GrpcTestCaseFfi<
       ReturnFfiReserveUsernameHashArgs,
@@ -2919,17 +3499,38 @@ type NativeFunctions = {
   TESTING_RoundTripU64: (input: bigint) => bigint;
   TESTING_RoundTripU8: (input: number) => number;
   TESTING_ServerMessageAck_Create: () => ServerMessageAck;
+  TESTING_SetCapabilitiesTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiSetCapabilitiesArgs, void>
+  >;
   TESTING_SetDeviceNameTests: () => Array<
     GrpcTestCaseFfi<ReturnFfiSetDeviceNameArgs, ReturnFfiSetDeviceNameOut>
   >;
   TESTING_SetDiscoverableByPhoneNumberTests: () => Array<
     GrpcTestCaseFfi<boolean, void>
   >;
+  TESTING_SetLastResortKemPreKeyTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiSetLastResortKemPreKeyArgs, void>
+  >;
+  TESTING_SetMfaKeyMetadataTests: () => Array<
+    GrpcTestCaseFfi<
+      ReturnFfiSetMfaKeyMetadataArgs,
+      ReturnFfiSetMfaKeyMetadataOut
+    >
+  >;
+  TESTING_SetOneTimeEcPreKeysTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiSetOneTimeEcPreKeysArgs, void>
+  >;
+  TESTING_SetOneTimeKemPreKeysTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiSetOneTimeKemPreKeysArgs, void>
+  >;
   TESTING_SetRegistrationLockTests: () => Array<
     GrpcTestCaseFfi<Uint8Array<ArrayBuffer>, void>
   >;
   TESTING_SetRegistrationRecoveryPasswordTests: () => Array<
     GrpcTestCaseFfi<Uint8Array<ArrayBuffer>, void>
+  >;
+  TESTING_SetSignedEcPreKeyTests: () => Array<
+    GrpcTestCaseFfi<ReturnFfiSetSignedEcPreKeyArgs, void>
   >;
   TESTING_SetUsernameLinkTests: () => Array<
     GrpcTestCaseFfi<ReturnFfiSetUsernameLinkArgs, ReturnFfiSetUsernameLinkOut>
@@ -2938,6 +3539,12 @@ type NativeFunctions = {
     source_public_key: Wrapper<PublicKey>,
     signed_pre_key: SignedPublicPreKey
   ) => void;
+  TESTING_StartMfaVerificationTests: () => Array<
+    GrpcTestCaseFfi<void, ReturnFfiStartMfaVerificationOut>
+  >;
+  TESTING_StartWebAuthnRegistrationTests: () => Array<
+    GrpcTestCaseFfi<void, ReturnFfiStartWebAuthnRegistrationOut>
+  >;
   TESTING_SubmitCallQualitySurveyTests: () => Array<
     GrpcTestCaseFfi<ReturnFfiCallQualitySurveyInternal, void>
   >;
@@ -3202,11 +3809,26 @@ type NativeFunctions = {
     signing_key: Wrapper<PrivateKey>,
     rng: RandomNumberGenerator
   ) => CancellablePromise<void>;
+  UnauthenticatedChatConnection_check_svr_credentials: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<UnauthenticatedChatConnection>,
+    number: string,
+    credentials: Array<string>
+  ) => CancellablePromise<Array<[string, ReturnFfiAuthCheckResult]>>;
   UnauthenticatedChatConnection_connect: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     connection_manager: Wrapper<ConnectionManager>,
     languages: Array<string>
   ) => CancellablePromise<UnauthenticatedChatConnection>;
+  UnauthenticatedChatConnection_create_login_receipt_credential: (
+    asyncRuntime: Wrapper<TokioAsyncContext>,
+    chat: Wrapper<UnauthenticatedChatConnection>,
+    payment_processor: ArgFfiPaymentProvider,
+    purchase_identifier: string,
+    receipt_credential_request_context: Uint8Array<ArrayBuffer>,
+    server_params: Wrapper<ServerPublicParams>,
+    purchase_time: Timestamp
+  ) => CancellablePromise<Uint8Array<ArrayBuffer>>;
   UnauthenticatedChatConnection_disconnect: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<UnauthenticatedChatConnection>
@@ -3277,13 +3899,6 @@ type NativeFunctions = {
     online_only: boolean,
     is_urgent: boolean
   ) => CancellablePromise<Array<Uint8Array<ArrayBuffer>>>;
-  UnauthenticatedChatConnection_send_raw_grpc: (
-    asyncRuntime: Wrapper<TokioAsyncContext>,
-    chat: Wrapper<UnauthenticatedChatConnection>,
-    service: string,
-    method: string,
-    payload: Uint8Array<ArrayBuffer>
-  ) => CancellablePromise<Uint8Array<ArrayBuffer>>;
   UnauthenticatedChatConnection_submit_call_quality_survey: (
     asyncRuntime: Wrapper<TokioAsyncContext>,
     chat: Wrapper<UnauthenticatedChatConnection>,
@@ -3395,28 +4010,45 @@ const {
   AuthCredentialWithPni_CheckValidContents,
   AuthenticatedChatConnection_clear_push_token,
   AuthenticatedChatConnection_clear_registration_lock,
+  AuthenticatedChatConnection_confirm_totp_key,
   AuthenticatedChatConnection_confirm_username,
   AuthenticatedChatConnection_connect,
+  AuthenticatedChatConnection_delete_account,
   AuthenticatedChatConnection_delete_username_hash,
   AuthenticatedChatConnection_delete_username_link,
   AuthenticatedChatConnection_disconnect,
+  AuthenticatedChatConnection_finish_mfa_verification,
+  AuthenticatedChatConnection_finish_web_authn_registration,
+  AuthenticatedChatConnection_generate_totp_key,
+  AuthenticatedChatConnection_get_currency_conversions,
   AuthenticatedChatConnection_get_devices,
+  AuthenticatedChatConnection_get_pre_key_count,
+  AuthenticatedChatConnection_get_sticker_upload_forms,
   AuthenticatedChatConnection_get_upload_form,
   AuthenticatedChatConnection_info,
   AuthenticatedChatConnection_init_listener,
+  AuthenticatedChatConnection_list_mfa_keys,
   AuthenticatedChatConnection_preconnect,
   AuthenticatedChatConnection_redeem_backup_receipt,
   AuthenticatedChatConnection_remove_device,
+  AuthenticatedChatConnection_remove_mfa_key,
   AuthenticatedChatConnection_reserve_username_hash,
   AuthenticatedChatConnection_send,
   AuthenticatedChatConnection_send_message,
-  AuthenticatedChatConnection_send_raw_grpc,
   AuthenticatedChatConnection_send_sync_message,
+  AuthenticatedChatConnection_set_capabilities,
   AuthenticatedChatConnection_set_device_name,
   AuthenticatedChatConnection_set_discoverable_by_phone_number,
+  AuthenticatedChatConnection_set_last_resort_kem_pre_key,
+  AuthenticatedChatConnection_set_mfa_key_metadata,
+  AuthenticatedChatConnection_set_one_time_ec_pre_keys,
+  AuthenticatedChatConnection_set_one_time_kem_pre_keys,
   AuthenticatedChatConnection_set_registration_lock,
   AuthenticatedChatConnection_set_registration_recovery_password,
+  AuthenticatedChatConnection_set_signed_ec_pre_key,
   AuthenticatedChatConnection_set_username_link,
+  AuthenticatedChatConnection_start_mfa_verification,
+  AuthenticatedChatConnection_start_web_authn_registration,
   AvatarUploadCredentialPresentation_CheckValidContents,
   AvatarUploadCredentialPresentation_GetCm,
   AvatarUploadCredentialPresentation_GetRedemptionTime,
@@ -3630,6 +4262,8 @@ const {
   MessageBackupKey_FromBackupKeyAndBackupId,
   MessageBackupKey_GetAesKey,
   MessageBackupKey_GetHmacKey,
+  MessageBackupSizing_FlushInterval,
+  MessageBackupSizing_PaddingSize,
   MessageBackupValidator_Validate,
   MinidumpToJSONString,
   Mp4Sanitizer_Sanitize,
@@ -3719,12 +4353,15 @@ const {
   RegisterAccountRequest_SetIdentityPqLastResortPreKey,
   RegisterAccountRequest_SetIdentityPublicKey,
   RegisterAccountRequest_SetIdentitySignedPreKey,
+  RegisterAccountRequest_SetOneTimePassword,
   RegisterAccountRequest_SetSkipDeviceTransfer,
+  RegisterAccountResponse_GetAci,
+  RegisterAccountResponse_GetAuthCredentialSalt,
   RegisterAccountResponse_GetEntitlementBackupExpirationSeconds,
   RegisterAccountResponse_GetEntitlementBackupLevel,
   RegisterAccountResponse_GetEntitlementBadges,
-  RegisterAccountResponse_GetIdentity,
   RegisterAccountResponse_GetNumber,
+  RegisterAccountResponse_GetPni,
   RegisterAccountResponse_GetReregistration,
   RegisterAccountResponse_GetStorageCapable,
   RegisterAccountResponse_GetUsernameHash,
@@ -3733,9 +4370,11 @@ const {
   RegistrationService_CheckSvr2Credentials,
   RegistrationService_CreateSession,
   RegistrationService_RegisterAccount,
+  RegistrationService_RegisterAccountWithoutNumber,
   RegistrationService_RegistrationSession,
   RegistrationService_RequestVerificationCode,
   RegistrationService_ReregisterAccount,
+  RegistrationService_ReregisterAccountWithoutNumber,
   RegistrationService_ResumeSession,
   RegistrationService_SessionId,
   RegistrationService_SubmitCaptcha,
@@ -3899,15 +4538,19 @@ const {
   TESTING_ChatRequestGetPath,
   TESTING_ChatResponseConvert,
   TESTING_ChatSendErrorConvert,
+  TESTING_CheckSvrCredentialsTests,
   TESTING_ClearPushTokenTests,
   TESTING_ClearRegistrationLockTests,
+  TESTING_ConfirmTotpKeyTests,
   TESTING_ConfirmUsernameTests,
   TESTING_ConnectionManager_isUsingProxy,
   TESTING_ConnectionManager_newLocalOverride,
   TESTING_ConvertOptionalUuid,
   TESTING_CopyBackupMediaTests,
+  TESTING_CreateLoginReceiptCredentialTests,
   TESTING_CreateOTP,
   TESTING_CreateOTPFromBase64,
+  TESTING_DeleteAccountTests,
   TESTING_DeleteBackupMediaTests,
   TESTING_DeleteUsernameHashTests,
   TESTING_DeleteUsernameLinkTests,
@@ -3938,6 +4581,8 @@ const {
   TESTING_FakeChatServer_Create,
   TESTING_FakeChatServer_GetNextRemote,
   TESTING_FakeRegistrationSession_CreateSession,
+  TESTING_FinishMfaVerificationTests,
+  TESTING_FinishWebAuthnRegistrationTests,
   TESTING_FutureCancellationCounter_Create,
   TESTING_FutureCancellationCounter_WaitForCount,
   TESTING_FutureFailure,
@@ -3945,17 +4590,22 @@ const {
   TESTING_FutureProducesOtherPointerType,
   TESTING_FutureProducesPointerType,
   TESTING_FutureSuccess,
+  TESTING_GenerateTotpKeyTests,
   TESTING_GetBackupCdnCredentialsTests,
   TESTING_GetBackupSvrBCredentialsTests,
+  TESTING_GetCurrencyConversionsTests,
   TESTING_GetDevicesTests,
   TESTING_GetMediaBackupInfoTests,
   TESTING_GetMessageBackupInfoTests,
+  TESTING_GetPreKeyCountTests,
+  TESTING_GetStickerUploadFormTests,
   TESTING_InputStreamReadIntoZeroLengthSlice,
   TESTING_JoinStringArray,
   TESTING_KeyTransChatSendError,
   TESTING_KeyTransFatalVerificationFailure,
   TESTING_KeyTransNonFatalVerificationFailure,
   TESTING_KeyTransStoredAccountData,
+  TESTING_ListMfaKeysTests,
   TESTING_LookUpUsernameLinkTests,
   TESTING_MyRemoteDeriveEnum_identity,
   TESTING_MyRemoteDeriveStruct_identity,
@@ -3991,6 +4641,7 @@ const {
   TESTING_ProcessBytestringArray,
   TESTING_RedeemBackupReceiptTests,
   TESTING_RegisterAccountResponse_CreateTestValue,
+  TESTING_RegisterAccountResponse_CreateTestValueWithoutPhoneNumber,
   TESTING_RegistrationService_CheckSvr2CredentialsErrorConvert,
   TESTING_RegistrationService_CheckSvr2CredentialsResponseConvert,
   TESTING_RegistrationService_CreateSessionErrorConvert,
@@ -4001,6 +4652,7 @@ const {
   TESTING_RegistrationService_UpdateSessionErrorConvert,
   TESTING_RegistrationSessionInfoConvert,
   TESTING_RemoveDeviceTests,
+  TESTING_RemoveMfaKeyTests,
   TESTING_ReserveUsernameHashTests,
   TESTING_ReturnIoError,
   TESTING_ReturnPair,
@@ -4012,12 +4664,20 @@ const {
   TESTING_RoundTripU64,
   TESTING_RoundTripU8,
   TESTING_ServerMessageAck_Create,
+  TESTING_SetCapabilitiesTests,
   TESTING_SetDeviceNameTests,
   TESTING_SetDiscoverableByPhoneNumberTests,
+  TESTING_SetLastResortKemPreKeyTests,
+  TESTING_SetMfaKeyMetadataTests,
+  TESTING_SetOneTimeEcPreKeysTests,
+  TESTING_SetOneTimeKemPreKeysTests,
   TESTING_SetRegistrationLockTests,
   TESTING_SetRegistrationRecoveryPasswordTests,
+  TESTING_SetSignedEcPreKeyTests,
   TESTING_SetUsernameLinkTests,
   TESTING_SignedPublicPreKey_CheckBridgesCorrectly,
+  TESTING_StartMfaVerificationTests,
+  TESTING_StartWebAuthnRegistrationTests,
   TESTING_SubmitCallQualitySurveyTests,
   TESTING_Svr2MasterKeyRestoreError,
   TESTING_TestStreamChunk_return,
@@ -4096,7 +4756,9 @@ const {
   UnauthenticatedChatConnection_backup_list_media,
   UnauthenticatedChatConnection_backup_refresh,
   UnauthenticatedChatConnection_backup_set_public_key,
+  UnauthenticatedChatConnection_check_svr_credentials,
   UnauthenticatedChatConnection_connect,
+  UnauthenticatedChatConnection_create_login_receipt_credential,
   UnauthenticatedChatConnection_disconnect,
   UnauthenticatedChatConnection_get_pre_keys_access_key_auth,
   UnauthenticatedChatConnection_get_pre_keys_group_auth,
@@ -4108,7 +4770,6 @@ const {
   UnauthenticatedChatConnection_send,
   UnauthenticatedChatConnection_send_message,
   UnauthenticatedChatConnection_send_multi_recipient_message,
-  UnauthenticatedChatConnection_send_raw_grpc,
   UnauthenticatedChatConnection_submit_call_quality_survey,
   UnidentifiedSenderMessageContent_Deserialize,
   UnidentifiedSenderMessageContent_GetContentHint,
@@ -4158,28 +4819,45 @@ export {
   AuthCredentialWithPni_CheckValidContents,
   AuthenticatedChatConnection_clear_push_token,
   AuthenticatedChatConnection_clear_registration_lock,
+  AuthenticatedChatConnection_confirm_totp_key,
   AuthenticatedChatConnection_confirm_username,
   AuthenticatedChatConnection_connect,
+  AuthenticatedChatConnection_delete_account,
   AuthenticatedChatConnection_delete_username_hash,
   AuthenticatedChatConnection_delete_username_link,
   AuthenticatedChatConnection_disconnect,
+  AuthenticatedChatConnection_finish_mfa_verification,
+  AuthenticatedChatConnection_finish_web_authn_registration,
+  AuthenticatedChatConnection_generate_totp_key,
+  AuthenticatedChatConnection_get_currency_conversions,
   AuthenticatedChatConnection_get_devices,
+  AuthenticatedChatConnection_get_pre_key_count,
+  AuthenticatedChatConnection_get_sticker_upload_forms,
   AuthenticatedChatConnection_get_upload_form,
   AuthenticatedChatConnection_info,
   AuthenticatedChatConnection_init_listener,
+  AuthenticatedChatConnection_list_mfa_keys,
   AuthenticatedChatConnection_preconnect,
   AuthenticatedChatConnection_redeem_backup_receipt,
   AuthenticatedChatConnection_remove_device,
+  AuthenticatedChatConnection_remove_mfa_key,
   AuthenticatedChatConnection_reserve_username_hash,
   AuthenticatedChatConnection_send,
   AuthenticatedChatConnection_send_message,
-  AuthenticatedChatConnection_send_raw_grpc,
   AuthenticatedChatConnection_send_sync_message,
+  AuthenticatedChatConnection_set_capabilities,
   AuthenticatedChatConnection_set_device_name,
   AuthenticatedChatConnection_set_discoverable_by_phone_number,
+  AuthenticatedChatConnection_set_last_resort_kem_pre_key,
+  AuthenticatedChatConnection_set_mfa_key_metadata,
+  AuthenticatedChatConnection_set_one_time_ec_pre_keys,
+  AuthenticatedChatConnection_set_one_time_kem_pre_keys,
   AuthenticatedChatConnection_set_registration_lock,
   AuthenticatedChatConnection_set_registration_recovery_password,
+  AuthenticatedChatConnection_set_signed_ec_pre_key,
   AuthenticatedChatConnection_set_username_link,
+  AuthenticatedChatConnection_start_mfa_verification,
+  AuthenticatedChatConnection_start_web_authn_registration,
   AvatarUploadCredentialPresentation_CheckValidContents,
   AvatarUploadCredentialPresentation_GetCm,
   AvatarUploadCredentialPresentation_GetRedemptionTime,
@@ -4393,6 +5071,8 @@ export {
   MessageBackupKey_FromBackupKeyAndBackupId,
   MessageBackupKey_GetAesKey,
   MessageBackupKey_GetHmacKey,
+  MessageBackupSizing_FlushInterval,
+  MessageBackupSizing_PaddingSize,
   MessageBackupValidator_Validate,
   MinidumpToJSONString,
   Mp4Sanitizer_Sanitize,
@@ -4482,12 +5162,15 @@ export {
   RegisterAccountRequest_SetIdentityPqLastResortPreKey,
   RegisterAccountRequest_SetIdentityPublicKey,
   RegisterAccountRequest_SetIdentitySignedPreKey,
+  RegisterAccountRequest_SetOneTimePassword,
   RegisterAccountRequest_SetSkipDeviceTransfer,
+  RegisterAccountResponse_GetAci,
+  RegisterAccountResponse_GetAuthCredentialSalt,
   RegisterAccountResponse_GetEntitlementBackupExpirationSeconds,
   RegisterAccountResponse_GetEntitlementBackupLevel,
   RegisterAccountResponse_GetEntitlementBadges,
-  RegisterAccountResponse_GetIdentity,
   RegisterAccountResponse_GetNumber,
+  RegisterAccountResponse_GetPni,
   RegisterAccountResponse_GetReregistration,
   RegisterAccountResponse_GetStorageCapable,
   RegisterAccountResponse_GetUsernameHash,
@@ -4496,9 +5179,11 @@ export {
   RegistrationService_CheckSvr2Credentials,
   RegistrationService_CreateSession,
   RegistrationService_RegisterAccount,
+  RegistrationService_RegisterAccountWithoutNumber,
   RegistrationService_RegistrationSession,
   RegistrationService_RequestVerificationCode,
   RegistrationService_ReregisterAccount,
+  RegistrationService_ReregisterAccountWithoutNumber,
   RegistrationService_ResumeSession,
   RegistrationService_SessionId,
   RegistrationService_SubmitCaptcha,
@@ -4662,15 +5347,19 @@ export {
   TESTING_ChatRequestGetPath,
   TESTING_ChatResponseConvert,
   TESTING_ChatSendErrorConvert,
+  TESTING_CheckSvrCredentialsTests,
   TESTING_ClearPushTokenTests,
   TESTING_ClearRegistrationLockTests,
+  TESTING_ConfirmTotpKeyTests,
   TESTING_ConfirmUsernameTests,
   TESTING_ConnectionManager_isUsingProxy,
   TESTING_ConnectionManager_newLocalOverride,
   TESTING_ConvertOptionalUuid,
   TESTING_CopyBackupMediaTests,
+  TESTING_CreateLoginReceiptCredentialTests,
   TESTING_CreateOTP,
   TESTING_CreateOTPFromBase64,
+  TESTING_DeleteAccountTests,
   TESTING_DeleteBackupMediaTests,
   TESTING_DeleteUsernameHashTests,
   TESTING_DeleteUsernameLinkTests,
@@ -4701,6 +5390,8 @@ export {
   TESTING_FakeChatServer_Create,
   TESTING_FakeChatServer_GetNextRemote,
   TESTING_FakeRegistrationSession_CreateSession,
+  TESTING_FinishMfaVerificationTests,
+  TESTING_FinishWebAuthnRegistrationTests,
   TESTING_FutureCancellationCounter_Create,
   TESTING_FutureCancellationCounter_WaitForCount,
   TESTING_FutureFailure,
@@ -4708,17 +5399,22 @@ export {
   TESTING_FutureProducesOtherPointerType,
   TESTING_FutureProducesPointerType,
   TESTING_FutureSuccess,
+  TESTING_GenerateTotpKeyTests,
   TESTING_GetBackupCdnCredentialsTests,
   TESTING_GetBackupSvrBCredentialsTests,
+  TESTING_GetCurrencyConversionsTests,
   TESTING_GetDevicesTests,
   TESTING_GetMediaBackupInfoTests,
   TESTING_GetMessageBackupInfoTests,
+  TESTING_GetPreKeyCountTests,
+  TESTING_GetStickerUploadFormTests,
   TESTING_InputStreamReadIntoZeroLengthSlice,
   TESTING_JoinStringArray,
   TESTING_KeyTransChatSendError,
   TESTING_KeyTransFatalVerificationFailure,
   TESTING_KeyTransNonFatalVerificationFailure,
   TESTING_KeyTransStoredAccountData,
+  TESTING_ListMfaKeysTests,
   TESTING_LookUpUsernameLinkTests,
   TESTING_MyRemoteDeriveEnum_identity,
   TESTING_MyRemoteDeriveStruct_identity,
@@ -4754,6 +5450,7 @@ export {
   TESTING_ProcessBytestringArray,
   TESTING_RedeemBackupReceiptTests,
   TESTING_RegisterAccountResponse_CreateTestValue,
+  TESTING_RegisterAccountResponse_CreateTestValueWithoutPhoneNumber,
   TESTING_RegistrationService_CheckSvr2CredentialsErrorConvert,
   TESTING_RegistrationService_CheckSvr2CredentialsResponseConvert,
   TESTING_RegistrationService_CreateSessionErrorConvert,
@@ -4764,6 +5461,7 @@ export {
   TESTING_RegistrationService_UpdateSessionErrorConvert,
   TESTING_RegistrationSessionInfoConvert,
   TESTING_RemoveDeviceTests,
+  TESTING_RemoveMfaKeyTests,
   TESTING_ReserveUsernameHashTests,
   TESTING_ReturnIoError,
   TESTING_ReturnPair,
@@ -4775,12 +5473,20 @@ export {
   TESTING_RoundTripU64,
   TESTING_RoundTripU8,
   TESTING_ServerMessageAck_Create,
+  TESTING_SetCapabilitiesTests,
   TESTING_SetDeviceNameTests,
   TESTING_SetDiscoverableByPhoneNumberTests,
+  TESTING_SetLastResortKemPreKeyTests,
+  TESTING_SetMfaKeyMetadataTests,
+  TESTING_SetOneTimeEcPreKeysTests,
+  TESTING_SetOneTimeKemPreKeysTests,
   TESTING_SetRegistrationLockTests,
   TESTING_SetRegistrationRecoveryPasswordTests,
+  TESTING_SetSignedEcPreKeyTests,
   TESTING_SetUsernameLinkTests,
   TESTING_SignedPublicPreKey_CheckBridgesCorrectly,
+  TESTING_StartMfaVerificationTests,
+  TESTING_StartWebAuthnRegistrationTests,
   TESTING_SubmitCallQualitySurveyTests,
   TESTING_Svr2MasterKeyRestoreError,
   TESTING_TestStreamChunk_return,
@@ -4859,7 +5565,9 @@ export {
   UnauthenticatedChatConnection_backup_list_media,
   UnauthenticatedChatConnection_backup_refresh,
   UnauthenticatedChatConnection_backup_set_public_key,
+  UnauthenticatedChatConnection_check_svr_credentials,
   UnauthenticatedChatConnection_connect,
+  UnauthenticatedChatConnection_create_login_receipt_credential,
   UnauthenticatedChatConnection_disconnect,
   UnauthenticatedChatConnection_get_pre_keys_access_key_auth,
   UnauthenticatedChatConnection_get_pre_keys_group_auth,
@@ -4871,7 +5579,6 @@ export {
   UnauthenticatedChatConnection_send,
   UnauthenticatedChatConnection_send_message,
   UnauthenticatedChatConnection_send_multi_recipient_message,
-  UnauthenticatedChatConnection_send_raw_grpc,
   UnauthenticatedChatConnection_submit_call_quality_survey,
   UnidentifiedSenderMessageContent_Deserialize,
   UnidentifiedSenderMessageContent_GetContentHint,

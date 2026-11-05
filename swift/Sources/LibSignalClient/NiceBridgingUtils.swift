@@ -169,20 +169,9 @@ extension Int8: DefaultInit {}
 extension UInt8: DefaultInit {}
 extension Float: DefaultInit {}
 
-internal struct IdentityConverter<T: DefaultInit>: NiceArgConverter, NiceReturnConverter {
-    typealias NiceArg = T
-    typealias FfiArg = T
-    typealias KeepAlive = ()
+internal enum IdentityResultConverter<T: DefaultInit>: NiceReturnConverter {
     typealias NiceReturn = T
     typealias FfiReturn = T
-
-    static func convertArg(_ arg: T) -> (T, ()?) {
-        (arg, nil)
-    }
-
-    static func convertArgBorrowed<Result>(_ arg: T, _ thunk: (T) throws -> Result) rethrows -> Result {
-        return try thunk(arg)
-    }
 
     static func emptyFfiReturn() -> T {
         return T()
@@ -190,6 +179,19 @@ internal struct IdentityConverter<T: DefaultInit>: NiceArgConverter, NiceReturnC
 
     static func convertReturn(consuming value: T) throws -> T {
         return value
+    }
+}
+internal enum IdentityArgConverter<T>: NiceArgConverter {
+    typealias NiceArg = T
+    typealias FfiArg = T
+    typealias KeepAlive = ()
+
+    static func convertArg(_ arg: T) -> (T, ()?) {
+        (arg, nil)
+    }
+
+    static func convertArgBorrowed<Result>(_ arg: T, _ thunk: (T) throws -> Result) rethrows -> Result {
+        return try thunk(arg)
     }
 }
 
@@ -247,10 +249,20 @@ internal struct BridgeHandleConverter<Ptr: SignalMutPointer, T: NativeHandleOwne
     }
 }
 
-internal struct ByteArrayConverter<T: ByteArray>: NiceArgConverter {
+internal struct ByteArrayConverter<T: ByteArray>: NiceArgConverter, NiceReturnConverter {
+    typealias NiceReturn = T
+    typealias FfiReturn = SignalOwnedBuffer
     typealias NiceArg = T
     typealias FfiArg = SignalBorrowedBuffer
     typealias KeepAlive = NSData
+
+    static func emptyFfiReturn() -> SignalOwnedBuffer {
+        SignalOwnedBuffer()
+    }
+    static func convertReturn(consuming value: SignalOwnedBuffer) throws -> T {
+        let data = try DataConverter.convertReturn(consuming: value)
+        return try T(contents: data)
+    }
 
     static func convertArg(_ arg: T) -> (FfiArg, KeepAlive?) {
         return DataConverter.convertArg(arg.serialize())
@@ -363,8 +375,7 @@ where BorrowedSlice.Element == Converter.FfiArg {
 
     private static func convertArgCore(_ arg: [Converter.NiceArg]) -> ([Converter.FfiArg], [Converter.KeepAlive]) {
         var keepAlives: [Converter.KeepAlive] = []
-        var contents: [Converter.FfiArg] = []
-        contents.reserveCapacity(arg.count)
+        var contents: [Converter.FfiArg] = Array(reservingCapacity: arg.count)
         // We don't reserve capacity for keepAlives, since we might not add to it for many types
         for item in arg {
             let (ffi, ka) = Converter.convertArg(item)
@@ -439,8 +450,7 @@ where Buffer.Element == Converter.FfiReturn {
             SignalFfi.signal_free_owned_buffer_of_max_aligned(value.typeErased())
         }
         let buffer = value.buffer()
-        var out: NiceReturn = []
-        out.reserveCapacity(buffer.count)
+        var out: NiceReturn = Array(reservingCapacity: buffer.count)
         var err: (any Error)? = nil
         for x in buffer {
             // We want to consume all return values, even if there's an intermediate failure, to
@@ -572,7 +582,7 @@ internal enum FixedByteArrayConverter<Helper: FixedByteArrayHelper>: NiceArgConv
 }
 
 internal enum UuidNiceConverter: NiceArgConverter, NiceReturnConverter {
-    static func convertArg(_ arg: UUID) -> (SignalUuid, Unit?) {
+    static func convertArg(_ arg: UUID) -> (SignalUuid, Never?) {
         (SignalUuid(bytes: arg.uuid), nil)
     }
 
@@ -590,7 +600,7 @@ internal enum UuidNiceConverter: NiceArgConverter, NiceReturnConverter {
 
     typealias NiceArg = UUID
     typealias FfiArg = SignalUuid
-    typealias KeepAlive = Unit
+    typealias KeepAlive = Never
     typealias NiceReturn = UUID
     typealias FfiReturn = SignalUuid
 }
@@ -598,7 +608,7 @@ internal enum UuidNiceConverter: NiceArgConverter, NiceReturnConverter {
 internal enum DeviceIdConverter: NiceArgConverter, NiceReturnConverter {
     typealias NiceArg = DeviceId
     typealias FfiArg = UInt8
-    typealias KeepAlive = Unit
+    typealias KeepAlive = Never
     typealias NiceReturn = DeviceId
     typealias FfiReturn = UInt8
     static func convertArg(_ arg: NiceArg) -> (FfiArg, KeepAlive?) {
@@ -623,7 +633,7 @@ internal enum TimestampConverter: NiceArgConverter, NiceReturnConverter {
         UInt64(arg.timeIntervalSince1970 * 1000.0)
     }
 
-    static func convertArg(_ arg: Date) -> (UInt64, Unit?) {
+    static func convertArg(_ arg: Date) -> (UInt64, Never?) {
         (Self.convertDate(arg), nil)
     }
 
@@ -641,7 +651,7 @@ internal enum TimestampConverter: NiceArgConverter, NiceReturnConverter {
 
     typealias NiceArg = Date
     typealias FfiArg = UInt64
-    typealias KeepAlive = Unit
+    typealias KeepAlive = Never
     typealias NiceReturn = Date
     typealias FfiReturn = UInt64
 }
@@ -698,5 +708,19 @@ where FfiOptional.Contents == Inner.FfiReturn {
         } else {
             return nil
         }
+    }
+}
+
+internal enum ServiceIdKindConverter: NiceArgConverter {
+    typealias NiceArg = ServiceIdKind
+    typealias FfiArg = UInt8
+    typealias KeepAlive = Never
+
+    static func convertArg(_ arg: ServiceIdKind) -> (UInt8, Never?) {
+        (arg.rawValue, nil)
+    }
+
+    static func convertArgBorrowed<Result>(_ arg: ServiceIdKind, _ thunk: (UInt8) throws -> Result) rethrows -> Result {
+        try thunk(arg.rawValue)
     }
 }
