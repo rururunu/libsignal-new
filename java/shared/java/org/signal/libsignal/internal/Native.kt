@@ -963,8 +963,9 @@ internal object Native {
     userAgent: String,
     remoteConfig: ObjectHandle,
     buildVariant: Int,
-    chatHost: String?
+    chatHost: String?,
   ): ObjectHandle
+
   @JvmStatic
   public external fun ConnectionManager_on_network_change(connectionManager: ObjectHandle): Unit
 
